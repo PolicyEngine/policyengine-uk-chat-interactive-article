@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import SiteHeader from './SiteHeader';
 
 const tools = [
   {
@@ -668,19 +669,22 @@ function TryIt() {
 
 export default function App() {
   return (
-    <main className="scrolly-container">
-      <article className="article-wrapper">
-        <Hero />
-        <Introduction />
-        <Problem />
-        <ToolExplorer />
-        <ArchitectureScrolly />
-        <Principles />
-        <ArchitectureToday />
-        <Guardrails />
-        <Limitations />
-        <TryIt />
-      </article>
-    </main>
+    <>
+      <SiteHeader />
+      <main className="scrolly-container">
+        <article className="article-wrapper">
+          <Hero />
+          <Introduction />
+          <Problem />
+          <ToolExplorer />
+          <ArchitectureScrolly />
+          <Principles />
+          <ArchitectureToday />
+          <Guardrails />
+          <Limitations />
+          <TryIt />
+        </article>
+      </main>
+    </>
   );
 }
