@@ -9,6 +9,9 @@ The repository reconstructs the source structure of PolicyEngine's interactive â
 - replaces the original narrative, interactive data, and diagrams with the current UK Chat article;
 - keeps the current Markdown article in `content/current-article.md` as the canonical editorial reference.
 
+The exact production files committed for the older article are preserved byte-for-byte in
+`reference/encode-policy-original/`. They are reference artefacts, not the editable source of this app.
+
 ## Development
 
 ```bash
