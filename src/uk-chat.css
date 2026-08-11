@@ -1,0 +1,68 @@
+.tool-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tool-cards .iteration-card {
+  min-height: 178px;
+}
+
+.tool-group {
+  display: block;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.iteration-card.active .tool-group {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.neutral-panel.shortcomings {
+  background: rgba(13, 115, 119, 0.06);
+  border-color: rgba(13, 115, 119, 0.16);
+}
+
+.neutral-panel .shortcomings-title {
+  color: var(--accent);
+}
+
+.neutral-panel.shortcomings li::before {
+  content: '→';
+  color: var(--accent);
+}
+
+.principle-icon {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.request-flow-svg {
+  max-height: 470px;
+}
+
+.next-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+.next-card:hover {
+  border-bottom-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .tool-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .tool-cards {
+    grid-template-columns: 1fr;
+  }
+}
