@@ -2,167 +2,238 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import SiteHeader from './SiteHeader';
 
-const tools = [
+const toolFamilies = [
   {
-    name: 'calculate_household',
-    group: 'Calculate',
-    summary: 'Calculate taxes, benefits, and net income for one synthetic household.',
-    output: 'Household-level results with the assumptions and year made explicit.',
+    name: 'Discovery',
+    summary: 'Find exact variables, parameters, entities, reform targets, and supported outputs.',
+    purpose: 'Discovery keeps the model from guessing the names of things in PolicyEngine.',
+    tools: [
+      {
+        name: 'list_entities',
+        summary: 'Lists the PolicyEngine UK model entities and the number of variables defined for each one.',
+      },
+      {
+        name: 'search_variables',
+        summary: 'Searches the UK variable registry and identifies each match’s entity and default-output status.',
+      },
+      {
+        name: 'get_variable',
+        summary: 'Verifies one exact UK variable and returns its metadata, entity, and default-output status.',
+      },
+      {
+        name: 'search_parameters',
+        summary: 'Searches policy parameters by path, label, description, or known alias.',
+      },
+      {
+        name: 'get_parameter',
+        summary: 'Looks up one exact policy parameter and returns its metadata and value for a selected year.',
+      },
+      {
+        name: 'list_reform_targets',
+        summary: 'Searches the current catalogue for parameter paths that can be used in a reform.',
+      },
+      {
+        name: 'list_household_input_variables',
+        summary: 'Lists known variables that can be supplied as overrides for an illustrative household.',
+      },
+      {
+        name: 'list_society_output_variables',
+        summary: 'Lists the variables a society simulation materializes by default, grouped by entity.',
+      },
+      {
+        name: 'list_supported_outputs',
+        summary: 'Lists the household, society, derivative, and chart outputs supported by the chat runtime.',
+      },
+    ],
   },
   {
-    name: 'run_economy_simulation',
-    group: 'Calculate',
-    summary: 'Run a parametric reform across the modelled UK population.',
-    output: 'Budget, decile, gain-and-loss, and poverty results.',
+    name: 'Validation',
+    summary: 'Check reform JSON and synthetic household inputs before calculation.',
+    purpose: 'Validation turns malformed inputs into explicit errors rather than plausible-looking results.',
+    tools: [
+      {
+        name: 'validate_reform',
+        summary: 'Validates flat PolicyEngine reform JSON for a selected year without running a simulation.',
+      },
+      {
+        name: 'validate_household',
+        summary: 'Validates an illustrative synthetic UK household against PolicyEngine variable metadata.',
+      },
+    ],
   },
   {
-    name: 'analyse_microdata',
-    group: 'Calculate',
-    summary: 'Answer aggregate population questions from the modelled microdata.',
-    output: 'Computed aggregates rather than figures recalled by the language model.',
+    name: 'Simulation',
+    summary: 'Run one illustrative household or a reform across the modelled UK population.',
+    purpose: 'These tools apply the tax and benefit rules and return turn-local result handles.',
+    tools: [
+      {
+        name: 'run_household_simulation',
+        summary: 'Runs an illustrative synthetic household through the PolicyEngine UK tax-benefit model.',
+      },
+      {
+        name: 'run_society_simulation',
+        summary: 'Runs baseline and reform UK simulations and returns metadata plus a turn-local result handle.',
+      },
+    ],
   },
   {
-    name: 'generate_chart',
-    group: 'Support',
-    summary: 'Turn a tool result into a chart using deterministic chart construction.',
-    output: 'A displayed artefact based on the calculation result.',
+    name: 'Analysis',
+    summary: 'Turn a society simulation into specific, weighted policy results.',
+    purpose: 'Dedicated derivatives calculate budget, programme, decile, poverty, inequality, and gain-or-loss results.',
+    tools: [
+      {
+        name: 'compute_budgetary_impact',
+        summary: 'Calculates changes in tax revenue, benefit spending, and the net budgetary impact of a reform.',
+      },
+      {
+        name: 'compute_program_breakdown',
+        summary: 'Calculates programme-level totals, caseloads, winners, and losers from a society simulation.',
+      },
+      {
+        name: 'compute_decile_impacts',
+        summary: 'Calculates changes in mean household income across a selected income- or wealth-decile concept.',
+      },
+      {
+        name: 'compute_winners_losers',
+        summary: 'Calculates people-weighted gain, loss, and no-change shares within income or wealth deciles.',
+      },
+      {
+        name: 'compute_poverty_metrics',
+        summary: 'Calculates UK poverty rates and headcounts overall and by age under baseline and reform.',
+      },
+      {
+        name: 'compute_inequality_metrics',
+        summary: 'Calculates the Gini coefficient and changes in the top 10%, top 1%, and bottom 50% income shares.',
+      },
+      {
+        name: 'aggregate_result',
+        summary: 'Calculates a weighted sum, mean, or count for a verified variable without returning survey rows.',
+      },
+    ],
   },
   {
-    name: 'run_python',
-    group: 'Support',
-    summary: 'Handle questions outside the typed tools in a sandboxed Python environment.',
-    output: 'Reviewed calculations that still use the same open engine.',
+    name: 'Presentation',
+    summary: 'Build a chart from a calculation result using a constrained chart schema.',
+    purpose: 'Charts are constructed from stored results, so the displayed artefact stays tied to the calculation.',
+    tools: [
+      {
+        name: 'generate_chart',
+        summary: 'Generates frontend-renderable chart markdown from a stored result or constrained chart data.',
+      },
+    ],
+  },
+];
+
+const authors = [
+  {
+    id: 'vahid-ahmadi',
+    name: 'Vahid Ahmadi',
+    title: 'Research Associate at PolicyEngine',
+    headshot: '/assets/authors/vahid-ahmadi.webp',
   },
   {
-    name: 'validate_reform',
-    group: 'Support',
-    summary: 'Check a reform definition before it is used in a calculation.',
-    output: 'Validation errors or a reform that is safe to pass to the engine.',
+    id: 'anthony-volk',
+    name: 'Anthony Volk',
+    title: 'Full-Stack Engineer at PolicyEngine',
+    headshot: '/assets/authors/anthony-volk.webp',
   },
 ];
 
 const requestSteps = [
   {
     number: 1,
-    title: 'Validate',
-    subtitle: 'Request and balance',
+    title: 'Ground',
+    subtitle: 'A structured opening plan',
     body: (
       <>
         <p>
-          The runtime first validates the request and checks the account&apos;s balance. These checks happen in
-          code before a model is asked to interpret anything.
+          After receiving a user inquiry, UK Chat analyzes the input and uses a fast routing step to try to
+          describe the user&apos;s request as a structured plan: the user&apos;s supplied input(s), their requested
+          output(s), and any tools the model intends to use.
         </p>
-        <div className="insight-box">
-          <div className="insight-label">Code-owned boundary</div>
-          <p>Request validation and billing are deterministic parts of the application.</p>
-        </div>
       </>
     ),
   },
   {
     number: 2,
-    title: 'Ground',
-    subtitle: 'System blocks and engine reference',
+    title: 'Resolve',
+    subtitle: 'Current catalogue evidence',
     body: (
       <>
         <p>
-          The server assembles the system prompt and an engine reference generated from the installed
-          PolicyEngine UK package. Both blocks are marked for prompt caching.
+          Server-side discovery uses exposed tools to check named policies and variables against the current
+          PolicyEngine catalogue. Exact and strong matches can support the plan; fuzzy matches remain suggestions
+          rather than facts.
         </p>
         <p>
-          The reference contains reported capabilities, public API signatures and docstrings, and the full
-          parameter schema. It reflects the engine installed at deploy time rather than a hand-maintained
-          description that can drift.
+          The server also refines the plan using relevant tool inputs and UK Chat-specified defaults (e.g., if no
+          year is provided by the user, infer that they want the current one). After this step, unresolved user
+          choices remain explicit.
         </p>
       </>
     ),
   },
   {
     number: 3,
-    title: 'Select',
-    subtitle: 'Model by request size',
+    title: 'Gate',
+    subtitle: 'Five deterministic outcomes',
     body: (
       <>
         <p>
-          The server opens a streaming Anthropic request. It defaults to Claude Haiku and escalates to Claude
-          Sonnet when the estimated input-token count of the messages, system prompt, and engine reference
-          passes a fixed threshold.
+          Using the structured plan that we started in stage 1 and refined in stage 2, UK Chat decides what to do
+          next. A complete request with inputs clearly stated by the user proceeds to computation. If any required
+          inputs are missing, UK Chat asks the user for clarification. Mixed, unsupported, and unrelated requests
+          take separate lightweight paths without calculation tools.
         </p>
-        <p>The model interprets the question and chooses a tool; it does not produce the calculation itself.</p>
       </>
     ),
   },
   {
     number: 4,
-    title: 'Calculate',
-    subtitle: 'Bounded tool-use loop',
+    title: 'Verify',
+    subtitle: 'Exact reform construction',
     body: (
       <>
         <p>
-          As content streams back, the chat watches for tool-use blocks. It resolves each name against a
-          dispatch table, runs independent tools concurrently, and appends each result to the conversation
-          before asking the model to continue.
+          If UK Chat determines that the user wants to understand the society-wide impacts of a given tax or
+          reform policy, then it performs a second, bounded check. The resolver searches the rules engine&apos;s
+          reform targets to construct a user&apos;s requested reform, then passes it through a validator to ensure it
+          can be run.
         </p>
-        <div className="wins-shortcomings">
-          <div className="wins">
-            <div className="wins-title">Controls</div>
-            <ul>
-              <li>Maximum 30 tool rounds</li>
-              <li>Stop after three identical calls</li>
-              <li>Return tool errors to the model</li>
-            </ul>
-          </div>
-          <div className="shortcomings neutral-panel">
-            <div className="shortcomings-title">Fallback</div>
-            <ul>
-              <li>Report attempted tools</li>
-              <li>Name the final error</li>
-              <li>Always send a clean terminal event</li>
-            </ul>
-          </div>
-        </div>
       </>
     ),
   },
   {
     number: 5,
-    title: 'Stream',
-    subtitle: 'Events to the client',
+    title: 'Calculate',
+    subtitle: 'A bounded 21-tool runtime',
     body: (
       <>
         <p>
-          The server streams chunks, tool events, and the final result to the client throughout the loop. The
-          user can see what the system tried rather than waiting for an opaque, single response.
-        </p>
-        <p>
-          Plan mode follows the same boundary. The runtime leaves tools out of the request entirely, so a model
-          cannot call a tool it was never offered.
+          At this point, UK Chat has created a verified execution plan. An AI model selected for the type and size
+          of the request uses one or more of the 21 public tools to execute the plan.
         </p>
       </>
     ),
   },
-];
-
-const principles = [
   {
-    title: 'Compute, do not recall',
-    description: 'Every figure comes from a tool that runs code against the PolicyEngine UK model.',
-  },
-  {
-    title: 'Code owns displayed results',
-    description: 'Validation, dispatch, calculations, chart construction, billing, and database writes stay in code.',
-  },
-  {
-    title: 'Bound the model',
-    description: 'Iteration caps, repeated-call detection, and deterministic error handling keep the loop finite.',
-  },
-  {
-    title: 'Generate the reference',
-    description: 'The model learns the installed engine surface from a deploy-time snapshot, not stale prose.',
-  },
-  {
-    title: 'State the limits',
-    description: 'The chat names assumptions and gaps instead of presenting every answer as universal or complete.',
+    number: 6,
+    title: 'Stream',
+    subtitle: 'An inspectable response',
+    body: (
+      <>
+        <p>
+          Text chunks, tool starts, tool inputs, completion summaries, and the final answer are streamed as
+          server-sent events to the chat interface. The client can show what the system tried while the answer is
+          being produced.
+        </p>
+        <p>
+          The tool loop remains bounded by a 30-round cap, repeated-call detection, result-size limits, and
+          explicit terminal events. Tool errors return as data so the model can recover without inventing a
+          result.
+        </p>
+      </>
+    ),
   },
 ];
 
@@ -183,10 +254,9 @@ function FadeIn({ children, delay = 0, className }) {
 function Hero() {
   return (
     <FadeIn>
-      <h1>AI chatbot for policymaking</h1>
+      <h1>PolicyEngine UK Chat: a new conversational interface for understanding tax and benefits</h1>
       <p className="subtitle">
-        How PolicyEngine UK Chat answers tax and benefit questions by running the microsimulation engine for
-        every figure
+        Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit policy
       </p>
     </FadeIn>
   );
@@ -196,21 +266,17 @@ function Introduction() {
   return (
     <FadeIn>
       <p>
-        Most AI chatbots answer a tax-or-benefit question by guessing the number from memory.{' '}
-        <a href="https://policyengine.org/uk">PolicyEngine UK Chat</a> instead{' '}
-        <strong>computes every number from the actual rules</strong>, by running our microsimulation engine. When
-        a question needs a figure, the chat calls a tool that runs the calculation rather than letting the model
-        supply it.
+        People are increasingly turning to AI language models to answer complex questions about tax and benefit
+        policy and reform, since models can read loosely worded questions and answer them in plain language. This
+        presents a problem: for many users, tax and benefit questions directly impact their lives and livelihoods,
+        and they require correct, verified answers. However, language models produce outputs from their learned
+        training data, producing results that may be partially or completely incorrect.
       </p>
       <p>
-        Language models are increasingly used to ask how a tax or benefit change would work, because a model can
-        read a loosely worded question and answer it in plain language. The difficulty is that a language model{' '}
-        <a href="https://www.gov.uk/government/publications/ai-playbook-for-the-uk-government/artificial-intelligence-playbook-for-the-uk-government-html#:~:text=large%20language%20models%20%28LLMs%29,may%20actually%20be%20factually%20incorrect">
-          produces its numbers from memory
-        </a>
-        , and in policy work the figure is usually what matters. PolicyEngine UK Chat is an AI chat interface to
-        PolicyEngine UK that answers UK tax-and-benefit questions in a conversation and runs the engine for every
-        calculation.
+        So, PolicyEngine built its newest tool, UK Chat, an AI chat interface that offers users the best of
+        conversational AI, undergirded by PolicyEngine&apos;s own deterministic rules and simulation engine. UK Chat
+        takes a user&apos;s conversational input, uses a series of probabilistic checks to determine what the user is
+        asking for, then computes quantitative policy results from actual tax and benefit rules.
       </p>
     </FadeIn>
   );
@@ -225,15 +291,16 @@ function Problem() {
         <a href="https://en.wikipedia.org/wiki/Large_language_model#:~:text=Autoregressive%20models,how%20a%20sequence%20continues">
           predicting continuations
         </a>
-        , <strong>not by applying tax and benefit rules</strong>. Ask one what Universal Credit a lone parent
-        receives and it returns a number without running the taper, the work allowance, or the benefit rates.
+        , not by applying tax and benefit rules. Ask one what Universal Credit (UC) a lone parent receives and it
+        may return a number without factoring in the UC&apos;s income-based taper rate, its work allowance, or its
+        differing benefit rates based on life situation.
       </p>
       <p>
-        Prompting does not change this. Instructing a model to state only real figures does not give it the rules;
-        it changes the wording around the same guess. A model can recite the correct taper rate and still get the
-        arithmetic wrong, and the output reads identically whether the figure is right or wrong, so{' '}
-        <strong>you cannot tell from the answer which it is</strong>. A figure that is wrong but reads as an answer
-        can be{' '}
+        Prompting does not change this. For example, instructing a model to state only “real” figures does not
+        correct its understanding of tax and benefit rules, it changes the wording around the same predicted
+        textual outputs. Further, the AI model&apos;s output reads identically whether its output is right or wrong,
+        so it is impossible to verify whether an answer is correct by reading it. In fact, a figure that is wrong,
+        but reads as a correct answer, can be{' '}
         <a href="https://post.parliament.uk/research-briefings/post-pn-0708/#:~:text=Some%20stakeholders%20have%20indicated,challenge%20AI%20decision-making">
           harder to catch than no figure at all
         </a>
@@ -241,72 +308,93 @@ function Problem() {
       </p>
       <p>
         <a href="https://www.nao.org.uk/reports/use-of-artificial-intelligence-in-government/#:~:text=Our%20survey%20of%20government%20bodies%20found,piloting%20and%20planning%20AI%20use%20cases">
-          This matters when results feed decisions
+          This matters when results power decisions
         </a>
-        . Anyone comparing two reforms needs figures that come from a stated model, not from a model&apos;s
-        recollection of figures it has seen. The same applies to a household trying to work out how a threshold
-        change affects its own income: the figure has to come from the rules, with the assumptions written down,
-        so it can be reproduced.
+        . Anyone comparing two reforms needs figures that come from a fixed model, not from an AI&apos;s recollection
+        of figures it has seen. The same applies to a household trying to work out how a tax reform affects its own
+        income: the figure has to come from clear, delineated rules, with assumptions written down, so that it can
+        be verified.
       </p>
     </FadeIn>
   );
 }
 
 function ToolExplorer() {
-  const [activeTool, setActiveTool] = useState(tools[0]);
+  const [activeFamily, setActiveFamily] = useState(toolFamilies[0]);
+  const [activeTool, setActiveTool] = useState(toolFamilies[0].tools[0]);
+
+  const selectFamily = (family) => {
+    setActiveFamily(family);
+    setActiveTool(family.tools[0]);
+  };
 
   return (
     <FadeIn>
-      <h2>The model plans, the tools calculate</h2>
+      <h2>The model proposes a plan</h2>
       <p>
-        AI tools like Claude or ChatGPT read the question, work out what is being asked, and select a tool. The
-        system prompt requires every number to come from a tool result, and{' '}
-        <strong>the tools, not the model, perform the calculation</strong>. Most numbers come from typed
-        calculation tools that call the{' '}
-        <a href="https://github.com/PolicyEngine/policyengine-uk">PolicyEngine UK microsimulation engine</a>;
-        some come from sandboxed Python over the same engine when a question falls outside those tools.
+        UK Chat breaks the user pathway into three segments: the AI model, the gateway, and supporting tools.
       </p>
       <p>
-        This split is the central design principle: <strong>anything that affects a number or an artefact is
-        handled by code, so it can be audited rather than trusted</strong>, while the open-ended work—reading the
-        question, planning, choosing a tool, and writing the answer—is left to the model.
+        First, the AI language model still does the predictive work it excels at. It takes the user&apos;s open-ended
+        natural-language prompt and develops a simulation/analysis plan. This plan has a required format and is
+        required to use one or more deterministic tools (more on those later) that are directly connected to the
+        PolicyEngine UK tax and benefit simulation engine.
       </p>
       <p>
-        The engine applies the rules, and <strong>it is open source, so anyone can check how a number is produced</strong>.
-        The same rules sit behind our web app and Python package, which keeps the chat&apos;s answers consistent with
-        the rest of PolicyEngine.
+        Next, UK Chat&apos;s gateway verifies, and sometimes constrains, that plan to ensure that PolicyEngine provides
+        the tooling required to answer the user&apos;s question(s). The gateway may also ask a user for clarification,
+        before finalizing a plan.
       </p>
 
-      <h2>The tools</h2>
+      <h2>Tools make that plan deterministic</h2>
       <p>
-        The six tools divide into three that run calculations on the engine and three that support them.{' '}
-        <strong>Every figure they return comes from a computation, not from the model.</strong>
+        At this point, UK Chat has a gateway-verified plan. This plan relies on one or more deterministic tools that
+        UK Chat exposes to ensure that every figure displayed to a user is rooted in verifiable facts as opposed
+        to AI large-language predictions.
+      </p>
+      <p>
+        UK Chat&apos;s AI model-facing tools are narrow by design. The tools fall into one of five types, each used to
+        constrain the AI model and ensure correct outputs while creating, verifying, or executing a plan. Explore
+        these categories in the interactive below.
       </p>
 
       <div className="iteration-container">
-        <p className="iteration-hint">Select a tool to inspect its role</p>
+        <p className="iteration-hint">Select a family to inspect its tools</p>
         <div className="iteration-cards tool-cards">
-          {tools.map((tool) => (
+          {toolFamilies.map((family) => (
             <button
-              className={`iteration-card ${activeTool.name === tool.name ? 'active' : ''}`}
-              key={tool.name}
+              className={`iteration-card ${activeFamily.name === family.name ? 'active' : ''}`}
+              key={family.name}
               type="button"
-              onClick={() => setActiveTool(tool)}
+              onClick={() => selectFamily(family)}
             >
-              <span className="tool-group">{tool.group}</span>
-              <span className="iteration-title">{tool.name}</span>
-              <span className="iteration-subtitle">{tool.summary}</span>
+              <span className="iteration-title">{family.name}</span>
+              <span className="iteration-subtitle">{family.summary}</span>
             </button>
           ))}
         </div>
         <div className="iteration-panel" aria-live="polite">
-          <div className="example-file-header">{activeTool.name}</div>
-          <p>{activeTool.summary}</p>
-          <div className="example-output">
-            <div className="example-output-line success">
-              <span className="icon">→</span>
-              <span>{activeTool.output}</span>
+          <div className="family-panel-header">
+            <div>
+              <div className="example-file-header">{activeFamily.name}</div>
+              <p>{activeFamily.purpose}</p>
             </div>
+          </div>
+          <div className="tool-name-list">
+            {activeFamily.tools.map((tool) => (
+              <button
+                className={`tool-name-button ${activeTool.name === tool.name ? 'active' : ''}`}
+                key={tool.name}
+                type="button"
+                onClick={() => setActiveTool(tool)}
+              >
+                <code>{tool.name}</code>
+              </button>
+            ))}
+          </div>
+          <div className="tool-summary" aria-live="polite">
+            <div className="tool-summary-name">{activeTool.name}</div>
+            <p>{activeTool.summary}</p>
           </div>
         </div>
       </div>
@@ -315,14 +403,14 @@ function ToolExplorer() {
 }
 
 function RequestFlowDiagram({ activeStep }) {
-  const labels = ['Request', 'Ground', 'Select', 'Calculate', 'Client'];
+  const labels = ['Plan', 'Catalogue', 'Gate', 'Reform', 'Tools', 'Client'];
 
   return (
     <svg
       className="flow-diagram-svg request-flow-svg"
-      viewBox="0 0 420 510"
+      viewBox="0 0 480 590"
       role="img"
-      aria-label="PolicyEngine UK Chat request lifecycle"
+      aria-label="PolicyEngine UK Chat request lifecycle from opening plan through verification, tools, and client"
     >
       <defs>
         <marker id="request-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
@@ -330,15 +418,15 @@ function RequestFlowDiagram({ activeStep }) {
         </marker>
       </defs>
       {labels.map((label, index) => {
-        const y = 25 + index * 94;
+        const y = 18 + index * 92;
         const active = activeStep === index;
         return (
           <g key={label}>
             {index > 0 && (
               <line
-                x1="210"
-                y1={y - 33}
-                x2="210"
+                x1="198"
+                y1={y - 35}
+                x2="198"
                 y2={y - 8}
                 stroke="#0d7377"
                 strokeWidth="2"
@@ -346,19 +434,19 @@ function RequestFlowDiagram({ activeStep }) {
               />
             )}
             <rect
-              x="72"
+              x="58"
               y={y}
-              width="276"
-              height="62"
+              width="280"
+              height="58"
               rx="10"
               fill={active ? '#0d7377' : '#ffffff'}
               stroke="#0d7377"
               strokeWidth={active ? 3 : 2}
             />
-            <circle cx="104" cy={y + 31} r="16" fill={active ? '#ffffff' : '#0d7377'} />
+            <circle cx="90" cy={y + 29} r="16" fill={active ? '#ffffff' : '#0d7377'} />
             <text
-              x="104"
-              y={y + 36}
+              x="90"
+              y={y + 34}
               textAnchor="middle"
               fontFamily="JetBrains Mono, monospace"
               fontSize="13"
@@ -368,8 +456,8 @@ function RequestFlowDiagram({ activeStep }) {
               {index + 1}
             </text>
             <text
-              x="138"
-              y={y + 37}
+              x="124"
+              y={y + 35}
               fontFamily="JetBrains Mono, monospace"
               fontSize="15"
               fontWeight="600"
@@ -380,8 +468,23 @@ function RequestFlowDiagram({ activeStep }) {
           </g>
         );
       })}
+
       <path
-        d="M348 338 C398 338 398 181 348 181"
+        d="M338 231 C350 231 352 231 362 231"
+        fill="none"
+        stroke="#0d7377"
+        strokeWidth="2"
+        markerEnd="url(#request-arrow)"
+      />
+      <rect x="368" y="205" width="104" height="52" rx="9" fill="#e7f5f4" stroke="#0d7377" />
+      <text x="420" y="226" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#0d7377">
+        no-tool paths
+      </text>
+      <text x="420" y="244" textAnchor="middle" fontFamily="Source Serif 4, Georgia, serif" fontSize="10" fill="#4a6363">
+        clarify · partial
+      </text>
+      <path
+        d="M338 415 C450 415 450 375 338 391"
         fill="none"
         stroke="#0d7377"
         strokeWidth="2"
@@ -389,15 +492,14 @@ function RequestFlowDiagram({ activeStep }) {
         markerEnd="url(#request-arrow)"
       />
       <text
-        x="386"
-        y="264"
+        x="429"
+        y="396"
         textAnchor="middle"
         fontFamily="JetBrains Mono, monospace"
         fontSize="10"
         fill="#4a6363"
-        transform="rotate(90 386 264)"
       >
-        tool results return to model
+        tool-result loop
       </text>
     </svg>
   );
@@ -428,9 +530,10 @@ function ArchitectureScrolly() {
     <FadeIn>
       <h2>Under the hood</h2>
       <p>
-        The runtime is a FastAPI server-sent-events handler that calls the Anthropic SDK directly. There is no
-        agent framework in the request path: the chat owns its tool loop, because the rules that matter are
-        enforced inside that loop rather than around it.
+        Let&apos;s delve further into the UK Chat user pathway. UK Chat&apos;s core runtime is a FastAPI
+        server-sent-events handler that calls the Anthropic SDK directly. There is no generic agent framework in
+        the request path. The chat owns both the opening gateway and the tool loop, so the rules that matter can
+        be enforced at the point where each decision is made.
       </p>
       <div className="scrollytelling-container">
         <div className="scrolly-narrative">
@@ -456,10 +559,10 @@ function ArchitectureScrolly() {
           <div className="example-panel diagram-only">
             <div className="example-header">
               <span className="example-title">One request</span>
-              <span className="example-badge">Step {activeStep + 1} of 5</span>
+              <span className="example-badge">Step {activeStep + 1} of {requestSteps.length}</span>
             </div>
             <div className="example-body">
-              <div className="diagram-title">Tool-backed answer</div>
+              <div className="diagram-title">Verified, tool-backed answer</div>
               <div className="diagram-container">
                 <RequestFlowDiagram activeStep={activeStep} />
               </div>
@@ -471,72 +574,46 @@ function ArchitectureScrolly() {
   );
 }
 
-function Principles() {
-  return (
-    <FadeIn>
-      <h2>The model–code boundary</h2>
-      <p>
-        The boundary between the model and the code is written down and treated as a contract. The model handles
-        the open-ended parts: interpreting the question, planning, selecting tools, writing prose, and suggesting
-        follow-ups. The code handles everything that affects a number or a displayed result.
-      </p>
-      <div className="principles-grid">
-        {principles.slice(0, 3).map((principle, index) => (
-          <motion.article
-            className="principle-card"
-            key={principle.title}
-            whileHover={{ y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="principle-icon" aria-hidden="true">{index + 1}</div>
-            <div className="principle-title">{principle.title}</div>
-            <p className="principle-desc">{principle.description}</p>
-          </motion.article>
-        ))}
-      </div>
-      <div className="principles-bottom">
-        {principles.slice(3).map((principle, index) => (
-          <motion.article
-            className="principle-card"
-            key={principle.title}
-            whileHover={{ y: -6 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="principle-icon" aria-hidden="true">{index + 4}</div>
-            <div className="principle-title">{principle.title}</div>
-            <p className="principle-desc">{principle.description}</p>
-          </motion.article>
-        ))}
-      </div>
-      <p>
-        Some of these choices could be left to the model and deliberately are not. If the model chose which rows
-        of a large table to show, that choice would be a sampling decision the reader cannot inspect. A
-        deterministic helper makes it instead.
-      </p>
-    </FadeIn>
-  );
-}
-
-function ArchitectureToday() {
+function WorkedExample() {
   const phases = [
-    { number: 1, title: 'Request', agents: ['validation', 'billing'], description: 'Check the request before model work begins.' },
-    { number: 2, title: 'Context', agents: ['system prompt', 'engine reference'], description: 'Ground the model in the installed engine.' },
-    { number: 3, title: 'Tool loop', agents: ['dispatch', 'calculation', 'recovery'], description: 'Run deterministic tools until the answer is complete.' },
-    { number: 4, title: 'Response', agents: ['SSE events', 'prose', 'follow-ups'], description: 'Stream an inspectable result to the client.' },
+    {
+      number: 1,
+      title: 'Ground',
+      agents: ['exact wording', 'budgetary impact'],
+      description: 'Identify the requested policy change, year, and output without turning assumptions into facts.',
+    },
+    {
+      number: 2,
+      title: 'Verify',
+      agents: ['catalogue search', 'reform validation'],
+      description: 'Bind “eldest-child rate” to a current reform target and validate the exact reform construction.',
+    },
+    {
+      number: 3,
+      title: 'Calculate',
+      agents: ['run_society_simulation', 'compute_budgetary_impact'],
+      description: 'Run the approved reform once, then pass its result handle to the requested derivative.',
+    },
+    {
+      number: 4,
+      title: 'Report',
+      agents: ['Enhanced FRS 2024–25', 'current law'],
+      description: 'Explain the computed change with the year, comparator, population, dataset, and method attached.',
+    },
   ];
 
   return (
     <FadeIn>
-      <h2>The architecture today</h2>
+      <h2>One reform, end to end</h2>
       <p>
-        The tools are defined in one place, with shared schema fragments—the year, reform-property, dataset,
-        filter, and chart schemas—reused across them. A definition such as a reform property therefore lives in a
-        single location.
+        Consider: “Set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary impact.”
+        The request contains a policy, a final value, and an output. It does not contain a PolicyEngine parameter
+        path, a reform object, or the sequence of tools needed to answer it.
       </p>
       <div className="workflow-timeline">
         <div className="workflow-header">
-          <div className="workflow-command-label">Question enters</div>
-          <div className="workflow-command">PolicyEngine UK Chat</div>
+          <div className="workflow-command-label">User request</div>
+          <div className="workflow-command">Set the eldest-child rate to £30 a week</div>
         </div>
         <div className="timeline-phases">
           {phases.map((phase) => (
@@ -558,43 +635,10 @@ function ArchitectureToday() {
         </div>
       </div>
       <p>
-        Plan mode uses the same logic. Telling a model not to call tools is a request it can ignore, so in plan
-        mode the list of tools is left out of the request entirely: <strong>a model cannot call a tool it was never
-        offered</strong>.
+        If the catalogue returned more than one materially plausible interpretation, or the reform resolver could
+        not determine what year or reform the user was requesting, the calculation would pause after
+        verification and ask the user to confirm the intended construction.
       </p>
-    </FadeIn>
-  );
-}
-
-function Guardrails() {
-  return (
-    <FadeIn>
-      <h2>Built-in constraints</h2>
-      <div className="results-section">
-        <div className="results-stats">
-          <div className="stat-card">
-            <div className="stat-number">6</div>
-            <div className="stat-label">Typed tools</div>
-            <div className="stat-detail">Three calculate and three support</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">30</div>
-            <div className="stat-label">Maximum tool rounds</div>
-            <div className="stat-detail">A hard cap keeps requests bounded</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">3×</div>
-            <div className="stat-label">Repeated-call stop</div>
-            <div className="stat-detail">Identical calls signal a stuck model</div>
-          </div>
-        </div>
-        <div className="results-description">
-          <p>
-            The aim is that <strong>every path either produces a number you can check or says plainly that it
-            cannot</strong>.
-          </p>
-        </div>
-      </div>
     </FadeIn>
   );
 }
@@ -608,10 +652,10 @@ function Limitations() {
         assumptions, and it is not a substitute for professional guidance on an individual&apos;s circumstances.
       </p>
       <p>
-        <code>run_economy_simulation</code> handles parametric reforms: changes to existing rates, thresholds, and
-        parameters. Reforms that introduce new mechanisms fall back to <code>run_python</code>, which we review,
-        or sit outside the standard tools. Only the major UK tax and benefit programmes are modelled, so questions
-        about minor or unmodelled provisions may not be answerable.
+        Society results are direct static microsimulation estimates. They do not estimate behavioural responses,
+        employment effects, inflation, GDP, market reactions, or general-equilibrium effects. When a request
+        mixes a supported policy result with one of those effects, the gateway notifies the user that it cannot
+        calculate these effects, then proceeds with what it can.
       </p>
       <p>
         Results depend on the dataset, year, and modelling assumptions, and the chat states these dependencies
@@ -627,17 +671,6 @@ function TryIt() {
   return (
     <FadeIn>
       <h2>Try it yourself</h2>
-      <div className="terminal-container">
-        <div className="terminal-header">
-          <span className="terminal-dot red" />
-          <span className="terminal-dot yellow" />
-          <span className="terminal-dot green" />
-          <span className="terminal-title">PolicyEngine UK Chat</span>
-        </div>
-        <div className="terminal-body">
-          <pre><code><span className="terminal-comment"># Ask a UK tax or benefit question</span>{'\n'}<span className="terminal-command">open https://policyengine.org/uk</span></code></pre>
-        </div>
-      </div>
       <p>
         We want to widen the range of reforms the typed tools cover, so fewer questions fall back to reviewed
         Python, and to make that fallback quicker to run and inspect. PolicyEngine UK Chat works alongside our
@@ -648,21 +681,24 @@ function TryIt() {
         Try it with a reform you care about, and check the figures against the open-source engine that produced
         them.
       </p>
-      <div className="next-cards">
-        <a className="next-card" href="https://policyengine.org/uk">
-          <span className="next-card-badge">Available now</span>
-          <div className="next-card-title">Open PolicyEngine UK Chat</div>
-          <p className="next-card-desc">Ask a question and inspect the calculated answer.</p>
-        </a>
-        <a className="next-card" href="https://github.com/PolicyEngine/policyengine-uk">
-          <span className="next-card-badge">Open source</span>
-          <div className="next-card-title">Inspect the engine</div>
-          <p className="next-card-desc">Review the tax and benefit rules behind the results.</p>
-        </a>
-      </div>
-      <p className="footer">
-        PolicyEngine builds free, open-source tools to help people understand public policy.
-      </p>
+    </FadeIn>
+  );
+}
+
+function AuthorSection() {
+  return (
+    <FadeIn className="author-section">
+      {authors.map((author) => (
+        <div className="author-row" key={author.id}>
+          <img className="author-headshot" src={author.headshot} alt={author.name} width="70" height="70" />
+          <div className="author-details">
+            <a className="author-name" href={`https://policyengine.org/uk/research?authors=${author.id}`}>
+              {author.name}
+            </a>
+            <div className="author-title">{author.title}</div>
+          </div>
+        </div>
+      ))}
     </FadeIn>
   );
 }
@@ -678,11 +714,13 @@ export default function App() {
           <Problem />
           <ToolExplorer />
           <ArchitectureScrolly />
-          <Principles />
-          <ArchitectureToday />
-          <Guardrails />
+          <WorkedExample />
           <Limitations />
           <TryIt />
+          <AuthorSection />
+          <p className="footer">
+            PolicyEngine builds free, open-source tools to help people understand public policy.
+          </p>
         </article>
       </main>
     </>
