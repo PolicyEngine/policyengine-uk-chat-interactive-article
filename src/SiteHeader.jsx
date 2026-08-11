@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IconChevronDown, IconMenu2, IconWorld, IconX } from '@tabler/icons-react';
+import policyEngineLogo from './assets/logos/policyengine/white.svg';
 
 const POLICYENGINE_URL = 'https://policyengine.org';
-const POLICYENGINE_LOGO = './assets/logos/policyengine/white.svg';
+const POLICYENGINE_LOGO = policyEngineLogo;
 
 // Kept in sync with app-v2's design tokens. Keeping this small token subset
 // local lets the standalone article use the production header without taking
@@ -334,11 +335,7 @@ function NavItem({ setup, active }) {
           />
           <NavUnderline visible={underlineVisible} />
         </button>
-        <DropdownPanel
-          items={dropdownItems}
-          open={dropdownOpen}
-          onClose={() => setDropdownOpen(false)}
-        />
+        <DropdownPanel items={dropdownItems} open={dropdownOpen} onClose={() => setDropdownOpen(false)} />
       </div>
     );
   }
@@ -568,6 +565,7 @@ function MobileMenu({ open, onClose, navItems }) {
   return (
     <div
       aria-hidden={!open}
+      inert={!open}
       style={{
         position: 'fixed',
         inset: 0,

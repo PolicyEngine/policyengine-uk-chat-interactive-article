@@ -1,11 +1,16 @@
 # PolicyEngine UK Chat interactive article
 
-A standalone interactive version of PolicyEngine's “AI chatbot for policymaking” article.
+A standalone interactive version of “PolicyEngine UK Chat: a new conversational interface for understanding tax
+and benefits”.
 
-The repository reconstructs the source structure of PolicyEngine's interactive “Automating Tax and Benefit Policy Modeling with Multi-Agent AI” article. That article's React source was not committed to `policyengine-app-v2`; only its production bundle and stylesheet were retained. This project therefore:
+The presentation structure is adapted from PolicyEngine's interactive “Automating Tax and Benefit Policy Modeling
+with Multi-Agent AI” article. Its original, editable React source is the
+[`scrolly-blog`](https://github.com/PolicyEngine/agentic-workflow-presentation/tree/main/scrolly-blog) app in
+[`PolicyEngine/agentic-workflow-presentation`](https://github.com/PolicyEngine/agentic-workflow-presentation).
+`policyengine-app-v2` separately retains a compiled copy of that older article for production. This project:
 
-- preserves the original article's scrollytelling structure and exact committed stylesheet;
-- restores the implementation as maintainable React source;
+- adapts the original article's scrollytelling structure and committed production stylesheet;
+- keeps the new implementation as maintainable React source;
 - replaces the original narrative, interactive data, and diagrams with the current UK Chat article;
 - keeps the current Markdown article in `content/current-article.md` as the canonical editorial reference.
 
@@ -26,3 +31,13 @@ bun run build
 ```
 
 The Vite build uses relative asset URLs so `dist/` can later be copied beneath a static path in `policyengine-app-v2`.
+
+## Checks
+
+```bash
+bun run check
+```
+
+## Licence
+
+[MIT](./LICENSE) © 2026 PolicyEngine

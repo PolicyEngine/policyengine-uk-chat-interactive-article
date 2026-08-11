@@ -12,6 +12,7 @@
   --border-accent: rgba(13, 115, 119, 0.4);
   --warning: #b45309;
   --warning-bg: rgba(180, 83, 9, 0.08);
+  --header-height: 58px;
 }
 * {
   margin: 0;
@@ -268,29 +269,36 @@ a:hover {
 .scrolly-sticky {
   flex: 0 0 420px;
   position: sticky;
-  top: 40px;
+  top: calc(var(--header-height) + 24px);
   height: fit-content;
   align-self: flex-start;
 }
 .narrative-step {
   min-height: 90vh;
-  padding: 40px 0;
-  opacity: 0.3;
-  transition: opacity 0.4s ease;
+  padding: 40px 20px 40px 24px;
+  opacity: 1;
+  border-left: 3px solid transparent;
+  border-radius: 0 10px 10px 0;
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease;
 }
 .narrative-step.active {
   opacity: 1;
+  background: linear-gradient(90deg, var(--accent-light), transparent 76%);
+  border-left-color: var(--accent);
 }
 .narrative-step:first-child {
-  padding-top: 0;
+  padding-top: 20px;
 }
 .narrative-step:last-child {
   min-height: auto;
   padding-bottom: 100px;
 }
 .step-header {
-  display: flex;
-  align-items: baseline;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -311,6 +319,7 @@ a:hover {
   flex-shrink: 0;
 }
 .step-title {
+  display: block;
   font-family:
     JetBrains Mono,
     monospace;
@@ -319,9 +328,26 @@ a:hover {
   color: var(--text-dark);
 }
 .step-subtitle {
+  display: block;
   font-size: 0.9rem;
   color: var(--text-light);
-  margin-left: 8px;
+  margin-top: 2px;
+}
+.step-segment {
+  align-self: start;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  border-radius: 999px;
+  color: var(--accent);
+  font-family:
+    JetBrains Mono,
+    monospace;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .step-diagram {
   background: var(--bg-diagram);
@@ -870,13 +896,20 @@ a:hover {
   }
   .narrative-step {
     min-height: auto;
-    padding: 30px 0;
+    padding: 30px 20px 30px 24px;
     opacity: 1;
   }
 }
 @media (max-width: 768px) {
   .wins-shortcomings {
     grid-template-columns: 1fr;
+  }
+  .step-header {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+  .step-segment {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 .principles-grid {
