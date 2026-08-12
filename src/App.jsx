@@ -203,8 +203,8 @@ const requestSteps = [
       <>
         <p>
           A fast model reads the user&apos;s words and proposes a structured description of the request. It
-          separates inputs the user actually supplied from the output they asked for and suggests which tools
-          may be needed. This is an interpretation, not yet permission to calculate.
+          separates inputs the user supplied from the output they asked for and suggests which tools may be
+          needed. This is an interpretation, not yet permission to calculate.
         </p>
       </>
     ),
@@ -338,10 +338,10 @@ function FadeIn({ children, delay = 0, className }) {
 function Hero() {
   return (
     <FadeIn>
-      <h1>PolicyEngine UK Chat: a new conversational interface for understanding tax and benefits</h1>
+      <h1>PolicyEngine UK Chat: a conversational interface for tax and benefits</h1>
       <p className="subtitle">
-        Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
-        policy
+        A conversational interface for UK tax and benefit questions, with every figure computed by the
+        PolicyEngine UK model
       </p>
     </FadeIn>
   );
@@ -404,9 +404,9 @@ function Problem() {
         built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits
         from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. In
         the launch results the top model matched PolicyEngine exactly on <strong>80.3%</strong> of its scored
-        outputs. Computed amounts were the hardest cases: income tax before credits scored far below
-        eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions,
-        and credits in the correct order.
+        outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility flags,
+        because getting it right means sequencing income concepts, thresholds, exclusions, and credits in the
+        correct order.
       </p>
     </FadeIn>
   );
@@ -597,9 +597,9 @@ function Boundary() {
         The central design decision is where the predictive layer stops and the deterministic layer starts.
       </p>
       <p>
-        The <strong>predictive</strong> parts are the ones language models are genuinely good at: interpreting
-        wording, deciding which kind of analysis is being requested, drafting the explanation, and suggesting
-        a sensible follow-up. Those tasks are open-ended and language-heavy.
+        The <strong>predictive</strong> parts are interpreting wording, deciding which kind of analysis is
+        being requested, drafting the explanation, and suggesting a follow-up. Those tasks are open-ended and
+        language-heavy.
       </p>
       <p>
         The <strong>deterministic</strong> parts are the ones users need to be able to check: validating the
@@ -720,10 +720,10 @@ function ToolExplorer() {
         UK Chat breaks the user pathway into three segments: the AI model, the gateway, and supporting tools.
       </p>
       <p>
-        First, the AI language model still does the predictive work it excels at. It takes the user&apos;s
-        open-ended natural-language prompt and develops a simulation or analysis plan. This plan has a
-        required format and is required to use one or more deterministic tools (more on those later) that are
-        directly connected to the PolicyEngine UK tax and benefit simulation engine.
+        First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
+        develops a simulation or analysis plan. This plan has a required format and is required to use one or
+        more deterministic tools (more on those later) that are directly connected to the PolicyEngine UK tax
+        and benefit simulation engine.
       </p>
       <p>
         Next, UK Chat&apos;s gateway verifies and sometimes constrains that plan to ensure PolicyEngine
@@ -738,7 +738,7 @@ function ToolExplorer() {
         calculations rather than language-model predictions.
       </p>
       <p>
-        UK Chat&apos;s AI model-facing tools are narrow by design. The tools fall into one of five types, each
+        The tools UK Chat exposes to the model are limited in scope. They fall into one of five types, each
         used to keep the model within supported operations while creating, verifying, or executing a plan.
         Explore these categories in the interactive below.
       </p>
@@ -1220,8 +1220,8 @@ function NextStepsAndTryIt() {
       <h2>Try it yourself</h2>
       <p>
         UK Chat&apos;s answers can be cited and reproduced because the figures come from the same open engine
-        that powers the rest of PolicyEngine. Try it with a reform you care about, then inspect the stated
-        year, dataset, comparator, and method alongside the answer.
+        that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset,
+        comparator, and method alongside the answer.
       </p>
       <a
         className="article-cta"
