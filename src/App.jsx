@@ -139,6 +139,45 @@ const toolFamilies = [
   },
 ];
 
+const questionKinds = [
+  {
+    id: 'households',
+    name: 'Households',
+    summary: 'Illustrative calculations',
+    question: 'A single parent, two children, earning £28,000 — what do they take home?',
+    description:
+      'The household is constructed as a synthetic input, validated, and run through the model to produce taxes, benefits, and net income under stated assumptions. One household containing one benefit unit per call; more complex arrangements need separate calls.',
+    tools: ['list_household_input_variables', 'validate_household', 'run_household_simulation'],
+  },
+  {
+    id: 'reforms',
+    name: 'Reforms',
+    summary: 'Population-wide impact',
+    question: 'How much does raising the personal allowance by £2,000 cost, and who gains?',
+    description:
+      'Parametric reforms run across the modelled UK population: budgetary impact, programme-level changes, poverty measures, decile impacts, winners and losers, and weighted caseload counts, each from its own derivative tool.',
+    tools: ['validate_reform', 'run_society_simulation', 'compute_budgetary_impact'],
+  },
+  {
+    id: 'charts',
+    name: 'Charts',
+    summary: 'Computed outputs, drawn',
+    question: 'Show me that by decile.',
+    description:
+      'When a comparison reads better as a picture than as prose, the computed output is mapped onto a fixed chart preset. The chart is drawn from the same typed result as the text, so the two cannot disagree.',
+    tools: ['generate_chart'],
+  },
+  {
+    id: 'follow-ups',
+    name: 'Follow-ups',
+    summary: 'One continuous thread',
+    question: 'And what if I made it £3,000 instead?',
+    description:
+      'Follow-ups stay in the same thread. The conversation carries the context; the simulation handles do not. Each turn re-runs what it needs, so a later answer never quietly rests on an earlier turn’s in-memory state.',
+    tools: ['gateway route', 'full lifecycle'],
+  },
+];
+
 const authors = [
   {
     id: 'vahid-ahmadi',
@@ -164,8 +203,8 @@ const requestSteps = [
       <>
         <p>
           A fast model reads the user&apos;s words and proposes a structured description of the request. It
-          separates inputs the user actually supplied from the output they asked for and suggests which tools
-          may be needed. This is an interpretation, not yet permission to calculate.
+          separates inputs the user supplied from the output they asked for and suggests which tools may be
+          needed. This is an interpretation, not yet permission to calculate.
         </p>
       </>
     ),
@@ -299,7 +338,7 @@ function FadeIn({ children, delay = 0, className }) {
 function Hero() {
   return (
     <FadeIn>
-      <h1>PolicyEngine UK Chat: a new conversational interface for understanding tax and benefits</h1>
+      <h1>PolicyEngine UK Chat: an AI interface for tax and benefits</h1>
       <p className="subtitle">
         Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
         policy
@@ -319,11 +358,10 @@ function Introduction() {
         from learned statistical patterns, and an answer may be partly or wholly wrong.
       </p>
       <p>
-        PolicyEngine therefore built UK Chat, an AI chat interface that combines conversational AI with
-        PolicyEngine&apos;s deterministic rules and simulation engine. A language model interprets an
-        open-ended request and proposes a structured plan. The gateway checks the proposed inputs and output
-        against the current PolicyEngine catalogue; only then do deterministic tools compute quantitative
-        policy results from actual tax and benefit rules.
+        PolicyEngine therefore built UK Chat, an AI interface to PolicyEngine&apos;s deterministic rules and
+        simulation engine. A language model interprets an open-ended request and proposes a structured plan.
+        The gateway checks the proposed inputs and output against the current PolicyEngine catalogue; only
+        then do deterministic tools compute quantitative policy results from actual tax and benefit rules.
       </p>
     </FadeIn>
   );
@@ -359,13 +397,324 @@ function Problem() {
         its income: the figure has to come from clear rules, with assumptions written down, so that it can be
         checked.
       </p>
+      <p>
+        We have measured this directly. In{' '}
+        <a href="https://policyengine.org/us/research/introducing-policybench">PolicyBench</a>, an evaluation
+        built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits
+        from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. In
+        the launch results the top model matched PolicyEngine exactly on <strong>80.3%</strong> of its scored
+        outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility flags,
+        because getting it right means sequencing income concepts, thresholds, exclusions, and credits in the
+        correct order.
+      </p>
     </FadeIn>
   );
 }
 
+function BoundaryDiagram() {
+  return (
+    <svg
+      className="agent-flow-svg boundary-flow-svg"
+      viewBox="0 0 900 300"
+      role="img"
+      aria-label="The boundary between the predictive AI layer and the deterministic PolicyEngine engine: the model interprets the question and calls typed tools; the engine validates, simulates, and computes; the model then explains the returned numbers."
+    >
+      <defs>
+        {/* A slightly concave, offset head reads as an arrow rather than a
+            blunt triangle at this scale; refX keeps the tip on the line end. */}
+        <marker
+          id="boundary-arrow"
+          markerWidth="12"
+          markerHeight="10"
+          refX="10.5"
+          refY="5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <path d="M1,0.8 L11,5 L1,9.2 L3.1,5 Z" className="flow-arrow" />
+        </marker>
+      </defs>
+
+      <rect
+        x="20"
+        y="40"
+        width="380"
+        height="220"
+        rx="14"
+        fill="rgba(13,115,119,0.05)"
+        stroke="var(--accent)"
+        strokeWidth="1.5"
+        strokeDasharray="8 5"
+      />
+      <text x="210" y="66" className="lane-label" fill="#0d7377">
+        PREDICTIVE — LANGUAGE MODEL
+      </text>
+
+      <rect
+        x="500"
+        y="40"
+        width="380"
+        height="220"
+        rx="14"
+        fill="rgba(44,100,150,0.05)"
+        stroke="#2c6496"
+        strokeWidth="1.5"
+        strokeDasharray="8 5"
+      />
+      <text x="690" y="66" className="lane-label" fill="#2c6496">
+        DETERMINISTIC — POLICYENGINE UK
+      </text>
+
+      <rect x="50" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
+      <text x="125" y="112" className="network-label">
+        Interpret the
+      </text>
+      <text x="125" y="130" className="network-label">
+        question
+      </text>
+
+      <rect x="220" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
+      <text x="295" y="112" className="network-label">
+        Choose a tool
+      </text>
+      <text x="295" y="130" className="network-label">
+        and arguments
+      </text>
+
+      <rect x="135" y="176" width="150" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
+      <text x="210" y="200" className="network-label">
+        Explain the
+      </text>
+      <text x="210" y="218" className="network-label">
+        returned numbers
+      </text>
+
+      <rect x="530" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
+      <text x="605" y="112" className="network-label">
+        Validate
+      </text>
+      <text x="605" y="130" className="network-label">
+        and look up
+      </text>
+
+      <rect x="700" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
+      <text x="775" y="112" className="network-label">
+        Simulate
+      </text>
+      <text x="775" y="130" className="network-label">
+        baseline + reform
+      </text>
+
+      <rect x="615" y="176" width="150" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
+      <text x="690" y="200" className="network-label">
+        Weighted outputs
+      </text>
+      <text x="690" y="218" className="network-label">
+        and chart rows
+      </text>
+
+      <line
+        x1="450"
+        y1="30"
+        x2="450"
+        y2="270"
+        stroke="#1a202c"
+        strokeWidth="2"
+        strokeDasharray="4 6"
+        opacity="0.45"
+      />
+      <text x="450" y="22" className="lane-label boundary-label" fill="#1a202c">
+        TYPED TOOL BOUNDARY
+      </text>
+
+      <line
+        x1="200"
+        y1="116"
+        x2="216"
+        y2="116"
+        className="boundary-connector"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        markerEnd="url(#boundary-arrow)"
+      />
+      <line
+        x1="370"
+        y1="116"
+        x2="526"
+        y2="116"
+        className="boundary-connector"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        markerEnd="url(#boundary-arrow)"
+      />
+      <text x="448" y="106" className="network-label flow-caption">
+        tool call
+      </text>
+      <line
+        x1="680"
+        y1="116"
+        x2="696"
+        y2="116"
+        className="boundary-connector"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        markerEnd="url(#boundary-arrow)"
+      />
+      {/* Simulate (x 700-850) and Weighted outputs (x 615-765) overlap between
+          700 and 765, so the two are joined by a plain vertical drop through the
+          middle of that overlap. Curving between their centres put the head in
+          at an angle, floating short of the box. */}
+      <line
+        x1="732"
+        y1="144"
+        x2="732"
+        y2="172"
+        className="boundary-connector"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        markerEnd="url(#boundary-arrow)"
+      />
+      <line
+        x1="611"
+        y1="204"
+        x2="289"
+        y2="204"
+        className="boundary-connector"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        markerEnd="url(#boundary-arrow)"
+      />
+      <text x="450" y="194" className="network-label flow-caption">
+        typed result
+      </text>
+    </svg>
+  );
+}
+
+function Boundary() {
+  return (
+    <FadeIn>
+      <h2>The boundary</h2>
+      <p>
+        The central design decision is where the predictive layer stops and the deterministic layer starts.
+      </p>
+      <p>
+        The <strong>predictive</strong> parts are interpreting wording, deciding which kind of analysis is
+        being requested, drafting the explanation, and suggesting a follow-up. Those tasks are open-ended and
+        language-heavy.
+      </p>
+      <p>
+        The <strong>deterministic</strong> parts are the ones users need to be able to check: validating the
+        request, looking up parameters, constructing household inputs, running simulations, computing weighted
+        outputs, and producing chart data. None of these depends on model memory. The runtime enforces the
+        boundary rather than asking the model to respect it in a prompt.
+      </p>
+      <div className="agent-flow-container boundary-flow-container">
+        <BoundaryDiagram />
+      </div>
+      <p>
+        When a question is ready for computation, the model receives the calculation tools plus a reference
+        generated from the installed engine: its capabilities and its parameter schema. What the model
+        believes it can compute is therefore tied to the deployed version of PolicyEngine, not to a
+        hand-written prompt that drifts out of date.
+      </p>
+      <p>
+        The gateway is what sits on that line. It takes the plan the model proposes and decides whether it may
+        cross into the deterministic side. That is why the rest of this article describes the system in three
+        parts rather than two: the model, the gateway, and the tools a plan reaches once the gateway admits
+        it.
+      </p>
+    </FadeIn>
+  );
+}
+
+const ARROW_STEPS = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+
+/* A card picker with real tab semantics: roving tabindex, arrow/Home/End keys,
+   and an explicit tablist/tabpanel pairing. The bare "Select a family…" hint it
+   replaces described the interaction without ever exposing it to the keyboard. */
+function CardTabs({
+  idPrefix,
+  label,
+  meta,
+  items,
+  activeIndex,
+  onSelect,
+  cardsClassName,
+  renderCard,
+  children,
+}) {
+  const tabRefs = useRef([]);
+
+  const focusTab = (index) => {
+    onSelect(items[index], index);
+    tabRefs.current[index]?.focus();
+  };
+
+  const handleKeyDown = (event) => {
+    const step = ARROW_STEPS[event.key];
+    if (step) {
+      event.preventDefault();
+      focusTab((activeIndex + step + items.length) % items.length);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      focusTab(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      focusTab(items.length - 1);
+    }
+  };
+
+  return (
+    <div className="iteration-container card-tabs">
+      <div className="card-tabs-header">
+        <span className="card-tabs-label">{label}</span>
+        <span className="card-tabs-meta">{meta}</span>
+      </div>
+      <div className={`iteration-cards ${cardsClassName}`} role="tablist" aria-label={label}>
+        {items.map((item, index) => {
+          const active = index === activeIndex;
+          return (
+            <button
+              aria-controls={`${idPrefix}-panel`}
+              aria-selected={active}
+              className={`iteration-card ${active ? 'active' : ''}`}
+              id={`${idPrefix}-tab-${index}`}
+              key={item.key}
+              ref={(node) => {
+                tabRefs.current[index] = node;
+              }}
+              role="tab"
+              tabIndex={active ? 0 : -1}
+              type="button"
+              onClick={() => onSelect(item, index)}
+              onKeyDown={handleKeyDown}
+            >
+              {renderCard(item, index)}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        aria-labelledby={`${idPrefix}-tab-${activeIndex}`}
+        className="iteration-panel"
+        id={`${idPrefix}-panel`}
+        role="tabpanel"
+        tabIndex={0}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const familyItems = toolFamilies.map((family) => ({ key: family.name, family }));
+const toolCount = toolFamilies.reduce((total, family) => total + family.tools.length, 0);
+
 function ToolExplorer() {
   const [activeFamily, setActiveFamily] = useState(toolFamilies[0]);
   const [activeTool, setActiveTool] = useState(toolFamilies[0].tools[0]);
+  const activeIndex = toolFamilies.indexOf(activeFamily);
 
   const selectFamily = (family) => {
     setActiveFamily(family);
@@ -379,10 +728,10 @@ function ToolExplorer() {
         UK Chat breaks the user pathway into three segments: the AI model, the gateway, and supporting tools.
       </p>
       <p>
-        First, the AI language model still does the predictive work it excels at. It takes the user&apos;s
-        open-ended natural-language prompt and develops a simulation or analysis plan. This plan has a
-        required format and is required to use one or more deterministic tools (more on those later) that are
-        directly connected to the PolicyEngine UK tax and benefit simulation engine.
+        First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
+        develops a simulation or analysis plan. This plan has a required format and is required to use one or
+        more deterministic tools (more on those later) that are directly connected to the PolicyEngine UK tax
+        and benefit simulation engine.
       </p>
       <p>
         Next, UK Chat&apos;s gateway verifies and sometimes constrains that plan to ensure PolicyEngine
@@ -397,51 +746,53 @@ function ToolExplorer() {
         calculations rather than language-model predictions.
       </p>
       <p>
-        UK Chat&apos;s AI model-facing tools are narrow by design. The tools fall into one of five types, each
+        The tools UK Chat exposes to the model are limited in scope. They fall into one of five types, each
         used to keep the model within supported operations while creating, verifying, or executing a plan.
         Explore these categories in the interactive below.
       </p>
 
-      <div className="iteration-container">
-        <p className="iteration-hint">Select a family to inspect its tools</p>
-        <div className="iteration-cards tool-cards">
-          {toolFamilies.map((family) => (
+      <CardTabs
+        idPrefix="tool-family"
+        label="Tool families"
+        meta={`${toolFamilies.length} families · ${toolCount} tools`}
+        items={familyItems}
+        activeIndex={activeIndex}
+        onSelect={(item) => selectFamily(item.family)}
+        cardsClassName="tool-cards"
+        renderCard={(item) => (
+          <>
+            <span className="iteration-title">{item.family.name}</span>
+            <span className="iteration-subtitle">{item.family.summary}</span>
+            <span className="card-tabs-count">
+              {item.family.tools.length} {item.family.tools.length === 1 ? 'tool' : 'tools'}
+            </span>
+          </>
+        )}
+      >
+        <div className="family-panel-header">
+          <div>
+            <div className="example-file-header">{activeFamily.name}</div>
+            <p>{activeFamily.purpose}</p>
+          </div>
+        </div>
+        <div className="tool-name-list">
+          {activeFamily.tools.map((tool) => (
             <button
-              className={`iteration-card ${activeFamily.name === family.name ? 'active' : ''}`}
-              key={family.name}
+              className={`tool-name-button ${activeTool.name === tool.name ? 'active' : ''}`}
+              key={tool.name}
               type="button"
-              onClick={() => selectFamily(family)}
+              aria-pressed={activeTool.name === tool.name}
+              onClick={() => setActiveTool(tool)}
             >
-              <span className="iteration-title">{family.name}</span>
-              <span className="iteration-subtitle">{family.summary}</span>
+              <code>{tool.name}</code>
             </button>
           ))}
         </div>
-        <div className="iteration-panel">
-          <div className="family-panel-header">
-            <div>
-              <div className="example-file-header">{activeFamily.name}</div>
-              <p>{activeFamily.purpose}</p>
-            </div>
-          </div>
-          <div className="tool-name-list">
-            {activeFamily.tools.map((tool) => (
-              <button
-                className={`tool-name-button ${activeTool.name === tool.name ? 'active' : ''}`}
-                key={tool.name}
-                type="button"
-                onClick={() => setActiveTool(tool)}
-              >
-                <code>{tool.name}</code>
-              </button>
-            ))}
-          </div>
-          <div className="tool-summary" aria-live="polite" aria-atomic="true">
-            <div className="tool-summary-name">{activeTool.name}</div>
-            <p>{activeTool.summary}</p>
-          </div>
+        <div className="tool-summary" aria-live="polite" aria-atomic="true">
+          <div className="tool-summary-name">{activeTool.name}</div>
+          <p>{activeTool.summary}</p>
         </div>
-      </div>
+      </CardTabs>
     </FadeIn>
   );
 }
@@ -645,7 +996,6 @@ function ArchitectureScrolly() {
               </span>
             </div>
             <div className="example-body">
-              <div className="diagram-title">Verified, tool-backed answer</div>
               <div className="diagram-container">
                 <RequestFlowDiagram activeStep={activeStep} />
               </div>
@@ -748,7 +1098,7 @@ function WorkedExample() {
         <div className="worked-result-heading">
           <div>
             <div className="worked-result-eyebrow">Computed result</div>
-            <h3 id="worked-result-title">About £950 million a year in additional government cost</h3>
+            <h3 id="worked-result-title">About £0.9 billion a year in additional government cost</h3>
           </div>
           <span className="worked-result-year">2026</span>
         </div>
@@ -796,6 +1146,50 @@ function WorkedExample() {
   );
 }
 
+const questionItems = questionKinds.map((kind) => ({ key: kind.id, kind }));
+
+function WhatYouCanAsk() {
+  const [activeKind, setActiveKind] = useState(questionKinds[0]);
+
+  return (
+    <FadeIn>
+      <h2>What you can ask</h2>
+      <p>
+        The Child Benefit reform above is one of four kinds of question supported today, and they compose: a
+        thread can move from a household example to a full reform analysis to a chart without switching tools.
+      </p>
+      <CardTabs
+        idPrefix="question-kind"
+        label="Kinds of question"
+        meta={`${questionKinds.length} kinds · one thread`}
+        items={questionItems}
+        activeIndex={questionKinds.indexOf(activeKind)}
+        onSelect={(item) => setActiveKind(item.kind)}
+        cardsClassName="tool-cards question-cards"
+        renderCard={(item, index) => (
+          <>
+            <span className="iteration-num">{index + 1}</span>
+            <span className="iteration-title">{item.kind.name}</span>
+            <span className="iteration-subtitle">{item.kind.summary}</span>
+          </>
+        )}
+      >
+        <div className="question-example" aria-live="polite" aria-atomic="true">
+          <p className="question-example-prompt">“{activeKind.question}”</p>
+          <p>{activeKind.description}</p>
+          <div className="tool-name-list">
+            {activeKind.tools.map((tool) => (
+              <span className="question-tool" key={tool}>
+                <code>{tool}</code>
+              </span>
+            ))}
+          </div>
+        </div>
+      </CardTabs>
+    </FadeIn>
+  );
+}
+
 function Limitations() {
   return (
     <FadeIn>
@@ -828,14 +1222,14 @@ function NextStepsAndTryIt() {
       <p>
         We want to widen the range of reforms covered by typed tools, improve the speed and inspectability of
         more specialised analyses, and keep expanding the evidence the gateway can resolve before calculation.
-        UK Chat also works alongside PolicyEngine&apos;s wider Claude integration and plugin ecosystem for
-        researchers building their own analyses.
+        UK Chat also works alongside PolicyEngine&apos;s wider generative AI integrations and plugin ecosystem
+        for researchers building their own analyses.
       </p>
       <h2>Try it yourself</h2>
       <p>
         UK Chat&apos;s answers can be cited and reproduced because the figures come from the same open engine
-        that powers the rest of PolicyEngine. Try it with a reform you care about, then inspect the stated
-        year, dataset, comparator, and method alongside the answer.
+        that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset,
+        comparator, and method alongside the answer.
       </p>
       <a
         className="article-cta"
@@ -876,9 +1270,11 @@ export default function App() {
           <Hero />
           <Introduction />
           <Problem />
+          <Boundary />
           <ToolExplorer />
           <ArchitectureScrolly />
           <WorkedExample />
+          <WhatYouCanAsk />
           <Limitations />
           <NextStepsAndTryIt />
           <AuthorSection />

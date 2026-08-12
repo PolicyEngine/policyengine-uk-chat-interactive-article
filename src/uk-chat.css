@@ -140,6 +140,138 @@
   max-height: min(560px, calc(100vh - 240px));
 }
 
+/* The legacy sheet scopes .network-label and .flow-arrow under
+   .full-width-flow-svg, so the boundary diagram needs its own copies. */
+.boundary-flow-container::before {
+  content: 'THE BOUNDARY';
+}
+
+.boundary-flow-svg .network-label {
+  fill: var(--text-mid);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  text-anchor: middle;
+}
+
+.boundary-flow-svg .lane-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-anchor: middle;
+}
+
+.boundary-flow-svg .boundary-label {
+  letter-spacing: 0.2em;
+}
+
+.boundary-flow-svg .flow-caption {
+  font-size: 11px;
+}
+
+.boundary-flow-svg .boundary-connector {
+  stroke: #6b8585;
+}
+
+.boundary-flow-svg .flow-arrow {
+  fill: #6b8585;
+}
+
+/* Replaces the bare "Select a family…" hint: a labelled toolbar that says what
+   the cards are and how many, rather than instructing the reader to click. */
+.card-tabs-header {
+  align-items: baseline;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+}
+
+.card-tabs-label {
+  color: var(--text-dark);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-tabs-meta {
+  color: var(--text-light);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+}
+
+.card-tabs .iteration-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-tabs-count {
+  color: var(--text-light);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  margin-top: auto;
+  padding-top: 10px;
+  text-transform: uppercase;
+}
+
+.iteration-card.active .card-tabs-count {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.card-tabs .iteration-card:focus-visible,
+.iteration-panel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Four kinds, one row. This sits after .tool-cards and before the breakpoints,
+   so the 2- and 1-column rules below still take over on narrow screens. */
+.question-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.question-cards .iteration-card {
+  min-height: 148px;
+}
+
+/* .iteration-card centres its text, but .iteration-num is a 36px flex circle,
+   so it needs auto margins to sit under the same centre line. */
+.question-cards .iteration-num {
+  margin: 0 auto 12px;
+}
+
+.question-cards .iteration-title,
+.question-cards .iteration-subtitle {
+  display: block;
+}
+
+.question-cards .iteration-title {
+  margin-bottom: 6px;
+}
+
+.question-example-prompt {
+  color: var(--text-dark);
+  font-size: 1.15rem;
+  font-style: italic;
+  margin-bottom: 14px;
+}
+
+.question-tool code {
+  background: #fff;
+  border: 1px solid rgba(13, 115, 119, 0.22);
+  border-radius: 6px;
+  color: var(--accent);
+  display: inline-block;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+  padding: 7px 9px;
+}
+
 .timeline-phases {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
