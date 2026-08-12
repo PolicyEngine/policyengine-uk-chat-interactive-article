@@ -465,13 +465,6 @@ function Problem() {
         eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions,
         and credits in the correct order.
       </p>
-      <div className="insight-box">
-        <div className="insight-label">The finding</div>
-        <p>
-          The harder the computation, the less a language model can be trusted to do it unaided. The benchmark
-          covers US policy, but the lesson carries directly to the UK.
-        </p>
-      </div>
     </FadeIn>
   );
 }
