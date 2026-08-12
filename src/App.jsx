@@ -340,8 +340,8 @@ function Hero() {
     <FadeIn>
       <h1>PolicyEngine UK Chat: an AI interface for tax and benefits</h1>
       <p className="subtitle">
-        Ask UK tax and benefit questions in plain English; every figure is computed by the PolicyEngine UK
-        model
+        Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
+        policy
       </p>
     </FadeIn>
   );
