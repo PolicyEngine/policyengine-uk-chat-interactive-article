@@ -153,10 +153,6 @@
   text-anchor: middle;
 }
 
-.boundary-flow-svg .flow-arrow {
-  fill: var(--accent);
-}
-
 .boundary-flow-svg .lane-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
@@ -171,6 +167,66 @@
 
 .boundary-flow-svg .flow-caption {
   font-size: 11px;
+}
+
+.boundary-flow-svg .boundary-connector {
+  stroke: #6b8585;
+}
+
+.boundary-flow-svg .flow-arrow {
+  fill: #6b8585;
+}
+
+/* Replaces the bare "Select a family…" hint: a labelled toolbar that says what
+   the cards are and how many, rather than instructing the reader to click. */
+.card-tabs-header {
+  align-items: baseline;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+}
+
+.card-tabs-label {
+  color: var(--text-dark);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-tabs-meta {
+  color: var(--text-light);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+}
+
+.card-tabs .iteration-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-tabs-count {
+  color: var(--text-light);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  margin-top: auto;
+  padding-top: 10px;
+  text-transform: uppercase;
+}
+
+.iteration-card.active .card-tabs-count {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.card-tabs .iteration-card:focus-visible,
+.iteration-panel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .question-cards .iteration-card {
@@ -530,10 +586,4 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-.stack-table th[scope='row'] {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.82rem;
-  white-space: nowrap;
 }
