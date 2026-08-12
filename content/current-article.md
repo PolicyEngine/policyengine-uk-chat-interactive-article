@@ -2,8 +2,6 @@
 
 _Introducing PolicyEngine's newest AI-powered tool to help users understand UK tax and benefit policy_
 
-_11 August 2026_
-
 People are increasingly turning to AI language models to answer complex questions about tax and benefit policy and reform because models can read loosely worded questions and answer them in plain language. This presents a problem: for many users, tax and benefit questions directly affect their lives and livelihoods, so they require correct, verifiable answers. Language models generate responses from learned statistical patterns, and an answer may be partly or wholly wrong.
 
 PolicyEngine therefore built UK Chat, an AI interface to PolicyEngine's deterministic rules and simulation engine. A language model interprets an open-ended request and proposes a structured plan. The gateway checks the proposed inputs and output against the current PolicyEngine catalogue; only then do deterministic tools compute quantitative policy results from actual tax and benefit rules.

@@ -149,13 +149,13 @@
 .boundary-flow-svg .network-label {
   fill: var(--text-mid);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 15px;
   text-anchor: middle;
 }
 
 .boundary-flow-svg .lane-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-anchor: middle;
@@ -166,7 +166,7 @@
 }
 
 .boundary-flow-svg .flow-caption {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .boundary-flow-svg .boundary-connector {
@@ -553,6 +553,18 @@
 }
 
 @media (max-width: 600px) {
+  /* The label and the count crowd each other on a phone. */
+  .card-tabs-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* .agent-flow-container's 60px of top padding is most of a phone screen. */
+  .boundary-flow-container {
+    padding: 44px 14px 26px;
+  }
+
   .tool-cards {
     grid-template-columns: 1fr;
   }
@@ -598,31 +610,11 @@
    results-table caveat and every card meta line. Darkened at the token in
    legacy-encode-policy.css; these are the knock-on fixes. */
 
-/* 18px serif across a 1160px wrapper runs to ~140 characters a line. Cap the
-   measure without narrowing the diagrams, tables, and card grids. */
-.article-wrapper > div > p,
-.article-wrapper > div > ul,
-.article-wrapper > div > ol,
-.article-wrapper .step-content p,
-.article-wrapper .subtitle {
-  max-width: 78ch;
-}
-
-.article-date {
-  color: var(--text-mid);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  margin-top: -34px;
-  margin-bottom: 50px;
-  text-transform: uppercase;
-}
-
 /* max-width: 100% stopped .agent-flow-container's overflow-x from ever
    engaging, so on a phone the 900-unit diagram shrank its labels to ~3.5px.
    A min-width lets the container scroll instead. */
 .boundary-flow-svg {
-  min-width: 620px;
+  min-width: 700px;
 }
 
 /* Keyboard focus looked identical to the selected tool, so two chips read as
@@ -676,4 +668,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* The diagram is the densest thing on the page; give it more of the wrapper
+   than .agent-flow-container's default 40px side padding allows. */
+.boundary-flow-container {
+  padding-left: 20px;
+  padding-right: 20px;
 }

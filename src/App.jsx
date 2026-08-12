@@ -343,9 +343,6 @@ function Hero() {
         Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
         policy
       </p>
-      <p className="article-date">
-        <time dateTime="2026-08-11">11 August 2026</time>
-      </p>
     </FadeIn>
   );
 }
@@ -441,7 +438,7 @@ function BoundaryDiagram() {
       <rect
         x="20"
         y="40"
-        width="380"
+        width="410"
         height="220"
         rx="14"
         fill="rgba(13,115,119,0.05)"
@@ -449,14 +446,14 @@ function BoundaryDiagram() {
         strokeWidth="1.5"
         strokeDasharray="8 5"
       />
-      <text x="210" y="66" className="lane-label" fill="#0d7377">
+      <text x="225" y="66" className="lane-label" fill="#0d7377">
         PREDICTIVE — LANGUAGE MODEL
       </text>
 
       <rect
-        x="500"
+        x="470"
         y="40"
-        width="380"
+        width="410"
         height="220"
         rx="14"
         fill="rgba(44,100,150,0.05)"
@@ -464,76 +461,85 @@ function BoundaryDiagram() {
         strokeWidth="1.5"
         strokeDasharray="8 5"
       />
-      <text x="690" y="66" className="lane-label" fill="#2c6496">
+      <text x="675" y="66" className="lane-label" fill="#2c6496">
         DETERMINISTIC — POLICYENGINE UK
       </text>
 
-      <rect x="50" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
-      <text x="125" y="112" className="network-label">
+      <rect x="38" y="88" width="175" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
+      <text x="125" y="111" className="network-label">
         Interpret the
       </text>
-      <text x="125" y="130" className="network-label">
+      <text x="125" y="131" className="network-label">
         question
       </text>
 
-      <rect x="220" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
-      <text x="295" y="112" className="network-label">
+      <rect x="237" y="88" width="175" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
+      <text x="324" y="111" className="network-label">
         Choose a tool
       </text>
-      <text x="295" y="130" className="network-label">
+      <text x="324" y="131" className="network-label">
         and arguments
       </text>
 
-      <rect x="135" y="176" width="150" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
-      <text x="210" y="200" className="network-label">
+      <rect x="138" y="176" width="175" height="56" rx="10" fill="#fff" stroke="#0d7377" strokeWidth="2" />
+      <text x="225" y="199" className="network-label">
         Explain the
       </text>
-      <text x="210" y="218" className="network-label">
+      <text x="225" y="219" className="network-label">
         returned numbers
       </text>
 
-      <rect x="530" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
-      <text x="605" y="112" className="network-label">
+      <rect x="488" y="88" width="175" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
+      <text x="575" y="111" className="network-label">
         Validate
       </text>
-      <text x="605" y="130" className="network-label">
+      <text x="575" y="131" className="network-label">
         and look up
       </text>
 
-      <rect x="700" y="88" width="150" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
-      <text x="775" y="112" className="network-label">
+      <rect x="687" y="88" width="175" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
+      <text x="774" y="111" className="network-label">
         Simulate
       </text>
-      <text x="775" y="130" className="network-label">
+      <text x="774" y="131" className="network-label">
         baseline + reform
       </text>
 
-      <rect x="615" y="176" width="150" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
-      <text x="690" y="200" className="network-label">
+      <rect x="588" y="176" width="175" height="56" rx="10" fill="#fff" stroke="#2c6496" strokeWidth="2" />
+      <text x="675" y="199" className="network-label">
         Weighted outputs
       </text>
-      <text x="690" y="218" className="network-label">
+      <text x="675" y="219" className="network-label">
         and chart rows
       </text>
 
-      <line
-        x1="450"
-        y1="30"
-        x2="450"
-        y2="270"
-        stroke="#1a202c"
-        strokeWidth="2"
-        strokeDasharray="4 6"
-        opacity="0.45"
-      />
+      {/* Broken into three segments so the two crossing captions sit in the gap
+          between the lanes without the dashed line running through them. */}
+      {[
+        [30, 92],
+        [116, 182],
+        [196, 270],
+      ].map(([y1, y2]) => (
+        <line
+          key={y1}
+          x1="450"
+          y1={y1}
+          x2="450"
+          y2={y2}
+          stroke="#1a202c"
+          strokeWidth="2"
+          strokeDasharray="4 6"
+          opacity="0.45"
+        />
+      ))}
       <text x="450" y="22" className="lane-label boundary-label" fill="#1a202c">
         TYPED TOOL BOUNDARY
       </text>
 
       <line
-        x1="200"
+        x1="213"
         y1="116"
-        x2="216"
+        x2="231"
         y2="116"
         className="boundary-connector"
         strokeWidth="1.8"
@@ -541,36 +547,35 @@ function BoundaryDiagram() {
         markerEnd="url(#boundary-arrow)"
       />
       <line
-        x1="370"
+        x1="412"
         y1="116"
-        x2="526"
+        x2="484"
         y2="116"
         className="boundary-connector"
         strokeWidth="1.8"
         strokeLinecap="round"
         markerEnd="url(#boundary-arrow)"
       />
-      <text x="448" y="106" className="network-label flow-caption">
+      <text x="450" y="104" className="network-label flow-caption">
         tool call
       </text>
       <line
-        x1="680"
+        x1="663"
         y1="116"
-        x2="696"
+        x2="681"
         y2="116"
         className="boundary-connector"
         strokeWidth="1.8"
         strokeLinecap="round"
         markerEnd="url(#boundary-arrow)"
       />
-      {/* Simulate (x 700-850) and Weighted outputs (x 615-765) overlap between
-          700 and 765, so the two are joined by a plain vertical drop through the
-          middle of that overlap. Curving between their centres put the head in
-          at an angle, floating short of the box. */}
+      {/* Simulate (x 687-862) and Weighted outputs (x 588-763) overlap between
+          687 and 763, so a plain vertical drop through the middle of that
+          overlap meets the box squarely. */}
       <line
-        x1="732"
+        x1="725"
         y1="144"
-        x2="732"
+        x2="725"
         y2="172"
         className="boundary-connector"
         strokeWidth="1.8"
@@ -578,16 +583,16 @@ function BoundaryDiagram() {
         markerEnd="url(#boundary-arrow)"
       />
       <line
-        x1="611"
+        x1="584"
         y1="204"
-        x2="289"
+        x2="317"
         y2="204"
         className="boundary-connector"
         strokeWidth="1.8"
         strokeLinecap="round"
         markerEnd="url(#boundary-arrow)"
       />
-      <text x="450" y="194" className="network-label flow-caption">
+      <text x="450" y="192" className="network-label flow-caption">
         typed result
       </text>
     </svg>
