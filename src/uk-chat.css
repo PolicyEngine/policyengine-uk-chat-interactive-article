@@ -652,3 +652,28 @@
 .timeline-phase-card:hover {
   border-color: var(--border);
 }
+
+/* Anthony asked for the tool names in the question panel to be labelled, so
+   they read as an illustration of what a question might call rather than as a
+   fixed list. Own border/spacing instead of borrowing .tool-name-list's. */
+.question-tools {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.question-tools-label {
+  color: var(--text-mid);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.question-tools-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

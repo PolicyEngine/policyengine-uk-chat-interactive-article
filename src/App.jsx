@@ -1161,9 +1161,8 @@ function WhatYouCanAsk() {
     <FadeIn>
       <h2>What you can ask</h2>
       <p>
-        The Child Benefit reform above is one of four kinds of question supported today. A single thread can
-        move between them — from a household example, to a full reform analysis, to a chart — without the
-        reader leaving the conversation.
+        The Child Benefit reform above is one of four kinds of questions supported today, and users can stack
+        these questions together within one conversation without starting a new chat.
       </p>
       <CardTabs
         idPrefix="question-kind"
@@ -1185,12 +1184,15 @@ function WhatYouCanAsk() {
           <p className="question-example-prompt">“{activeKind.question}”</p>
           <p>{activeKind.description}</p>
           {activeKind.tools.length > 0 && (
-            <div className="tool-name-list">
-              {activeKind.tools.map((tool) => (
-                <span className="question-tool" key={tool}>
-                  <code>{tool}</code>
-                </span>
-              ))}
+            <div className="question-tools">
+              <div className="question-tools-label">Possible tool usage</div>
+              <div className="question-tools-chips">
+                {activeKind.tools.map((tool) => (
+                  <span className="question-tool" key={tool}>
+                    <code>{tool}</code>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>

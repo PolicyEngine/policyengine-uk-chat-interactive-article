@@ -157,7 +157,7 @@ If the catalogue returned more than one materially plausible interpretation, or 
 
 ## What you can ask
 
-The Child Benefit reform above is one of four kinds of question supported today. A single thread can move between them — from a household example, to a full reform analysis, to a chart — without the reader leaving the conversation.
+The Child Benefit reform above is one of four kinds of questions supported today, and users can stack these questions together within one conversation without starting a new chat.
 
 ### Households — Illustrative calculations
 
