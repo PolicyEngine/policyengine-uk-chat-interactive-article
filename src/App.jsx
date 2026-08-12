@@ -174,7 +174,7 @@ const questionKinds = [
     question: 'And what if I made it £3,000 instead?',
     description:
       'Follow-ups stay in the same thread. The conversation carries the context; the simulation handles do not. Each turn re-runs what it needs, so a later answer never quietly rests on an earlier turn’s in-memory state.',
-    tools: ['gateway route', 'full lifecycle'],
+    tools: [],
   },
 ];
 
@@ -222,8 +222,8 @@ const requestSteps = [
           rather than facts.
         </p>
         <p>
-          It then refines the plan with the relevant tool inputs and declared defaults—for example, using the
-          current year when the user does not name one. Any choice the system cannot resolve safely stays
+          It then refines the plan with the relevant tool inputs and declared defaults — for example, using
+          the current year when the user does not name one. Any choice the system cannot resolve safely stays
           explicit instead of being silently invented.
         </p>
       </>
@@ -342,6 +342,9 @@ function Hero() {
       <p className="subtitle">
         Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
         policy
+      </p>
+      <p className="article-date">
+        <time dateTime="2026-08-11">11 August 2026</time>
       </p>
     </FadeIn>
   );
@@ -614,15 +617,14 @@ function Boundary() {
       </div>
       <p>
         When a question is ready for computation, the model receives the calculation tools plus a reference
-        generated from the installed engine: its capabilities and its parameter schema. What the model
-        believes it can compute is therefore tied to the deployed version of PolicyEngine, not to a
+        generated from the installed engine: the engine's capabilities and parameter schema. What the model
+        can be asked to compute is therefore tied to the deployed version of PolicyEngine, not to a
         hand-written prompt that drifts out of date.
       </p>
       <p>
-        The gateway is what sits on that line. It takes the plan the model proposes and decides whether it may
-        cross into the deterministic side. That is why the rest of this article describes the system in three
-        parts rather than two: the model, the gateway, and the tools a plan reaches once the gateway admits
-        it.
+        The gateway sits on that line. It takes the plan the model proposes and decides whether it may cross
+        into the deterministic side, which is why the system has three parts rather than two: the model, the
+        gateway, and the tools a plan reaches once the gateway admits it.
       </p>
     </FadeIn>
   );
@@ -729,9 +731,8 @@ function ToolExplorer() {
       </p>
       <p>
         First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
-        develops a simulation or analysis plan. This plan has a required format and is required to use one or
-        more deterministic tools (more on those later) that are directly connected to the PolicyEngine UK tax
-        and benefit simulation engine.
+        develops a simulation or analysis plan. The plan has a required format and must use one or more of the
+        deterministic tools connected to the PolicyEngine UK tax and benefit simulation engine.
       </p>
       <p>
         Next, UK Chat&apos;s gateway verifies and sometimes constrains that plan to ensure PolicyEngine
@@ -741,14 +742,12 @@ function ToolExplorer() {
 
       <h2>Tools make the calculation deterministic</h2>
       <p>
-        At this point, UK Chat has a gateway-verified plan. This plan relies on one or more deterministic
-        tools that UK Chat exposes to ensure that every figure displayed to a user is rooted in verifiable
-        calculations rather than language-model predictions.
+        At this point, UK Chat has a gateway-verified plan, and every figure in the answer comes from the
+        tools that plan calls rather than from the model.
       </p>
       <p>
-        The tools UK Chat exposes to the model are limited in scope. They fall into one of five types, each
-        used to keep the model within supported operations while creating, verifying, or executing a plan.
-        Explore these categories in the interactive below.
+        The tools UK Chat exposes to the model are limited in scope. They fall into five types, each keeping
+        the model within supported operations while it creates, verifies, or executes a plan.
       </p>
 
       <CardTabs
@@ -968,6 +967,7 @@ function ArchitectureScrolly() {
           {requestSteps.map((step, index) => (
             <section
               className={`narrative-step ${activeStep === index ? 'active' : ''}`}
+              aria-labelledby={`stage-${step.number}`}
               data-step={index}
               key={step.number}
               aria-current={activeStep === index ? 'step' : undefined}
@@ -978,7 +978,9 @@ function ArchitectureScrolly() {
               <div className="step-header">
                 <span className="step-number">{step.number}</span>
                 <span className="step-heading">
-                  <span className="step-title">{step.title}</span>
+                  <h3 className="step-title" id={`stage-${step.number}`}>
+                    {step.title}
+                  </h3>
                   <span className="step-subtitle">{step.subtitle}</span>
                 </span>
                 <span className="step-segment">{step.segment}</span>
@@ -1039,7 +1041,7 @@ function WorkedExample() {
       segment: 'Gateway',
       agents: ['effective 1 January 2026', 'validate_reform'],
       description:
-        'Construct an exact dated reform that sets the parameter to 30.0, then validate it against the PolicyEngine UK rules engine before simulation.',
+        'Construct an exact dated reform that sets the parameter to 30.0 pounds per week, then validate it against the PolicyEngine UK rules engine before simulation.',
     },
     {
       number: 5,
@@ -1070,7 +1072,10 @@ function WorkedExample() {
       <div className="workflow-timeline">
         <div className="workflow-header">
           <div className="workflow-command-label">User request</div>
-          <div className="workflow-command">For 2026, set the eldest-child rate to £30 a week</div>
+          <div className="workflow-command">
+            For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary
+            impact
+          </div>
         </div>
         <div className="timeline-phases">
           {phases.map((phase) => (
@@ -1105,7 +1110,8 @@ function WorkedExample() {
         <p>
           A production run compares the reform with 2026 current law using PolicyEngine&apos;s Enhanced Family
           Resources Survey dataset for 2024–25, release 1.56.13. It is a direct static microsimulation
-          estimate.
+          estimate. Tax revenue rises because a higher Child Benefit rate increases the High Income Child
+          Benefit Charge paid by higher-income families.
         </p>
         <div className="worked-result-table-wrap">
           <table className="worked-result-table">
@@ -1155,8 +1161,9 @@ function WhatYouCanAsk() {
     <FadeIn>
       <h2>What you can ask</h2>
       <p>
-        The Child Benefit reform above is one of four kinds of question supported today, and they compose: a
-        thread can move from a household example to a full reform analysis to a chart without switching tools.
+        The Child Benefit reform above is one of four kinds of question supported today. A single thread can
+        move between them — from a household example, to a full reform analysis, to a chart — without the
+        reader leaving the conversation.
       </p>
       <CardTabs
         idPrefix="question-kind"
@@ -1174,16 +1181,18 @@ function WhatYouCanAsk() {
           </>
         )}
       >
-        <div className="question-example" aria-live="polite" aria-atomic="true">
+        <div className="question-example">
           <p className="question-example-prompt">“{activeKind.question}”</p>
           <p>{activeKind.description}</p>
-          <div className="tool-name-list">
-            {activeKind.tools.map((tool) => (
-              <span className="question-tool" key={tool}>
-                <code>{tool}</code>
-              </span>
-            ))}
-          </div>
+          {activeKind.tools.length > 0 && (
+            <div className="tool-name-list">
+              {activeKind.tools.map((tool) => (
+                <span className="question-tool" key={tool}>
+                  <code>{tool}</code>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </CardTabs>
     </FadeIn>

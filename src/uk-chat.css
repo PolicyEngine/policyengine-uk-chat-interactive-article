@@ -593,3 +593,62 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* #7a9494 measured 3.2:1 on white, below the 4.5:1 minimum, and it carried the
+   results-table caveat and every card meta line. Darkened at the token in
+   legacy-encode-policy.css; these are the knock-on fixes. */
+
+/* 18px serif across a 1160px wrapper runs to ~140 characters a line. Cap the
+   measure without narrowing the diagrams, tables, and card grids. */
+.article-wrapper > div > p,
+.article-wrapper > div > ul,
+.article-wrapper > div > ol,
+.article-wrapper .step-content p,
+.article-wrapper .subtitle {
+  max-width: 78ch;
+}
+
+.article-date {
+  color: var(--text-mid);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  margin-top: -34px;
+  margin-bottom: 50px;
+  text-transform: uppercase;
+}
+
+/* max-width: 100% stopped .agent-flow-container's overflow-x from ever
+   engaging, so on a phone the 900-unit diagram shrank its labels to ~3.5px.
+   A min-width lets the container scroll instead. */
+.boundary-flow-svg {
+  min-width: 620px;
+}
+
+/* Keyboard focus looked identical to the selected tool, so two chips read as
+   active at once while tabbing. */
+.tool-name-button:focus-visible {
+  background: #fff;
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tool-name-button.active:focus-visible {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* The worked-example timeline advertises clickability it does not have. */
+.timeline-phase-header:hover {
+  transform: none;
+}
+
+.timeline-phase-header:hover .timeline-phase-num {
+  box-shadow: 0 4px 15px #0d73774d;
+}
+
+.timeline-phase-card:hover {
+  border-color: var(--border);
+}
