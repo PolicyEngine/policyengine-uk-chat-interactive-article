@@ -229,6 +229,12 @@
   outline-offset: 3px;
 }
 
+/* Four kinds, one row. This sits after .tool-cards and before the breakpoints,
+   so the 2- and 1-column rules below still take over on narrow screens. */
+.question-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .question-cards .iteration-card {
   min-height: 148px;
 }
