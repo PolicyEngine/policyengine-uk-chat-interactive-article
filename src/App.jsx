@@ -338,10 +338,10 @@ function FadeIn({ children, delay = 0, className }) {
 function Hero() {
   return (
     <FadeIn>
-      <h1>PolicyEngine UK Chat: a conversational interface for tax and benefits</h1>
+      <h1>PolicyEngine UK Chat: an AI interface for tax and benefits</h1>
       <p className="subtitle">
-        A conversational interface for UK tax and benefit questions, with every figure computed by the
-        PolicyEngine UK model
+        Ask UK tax and benefit questions in plain English; every figure is computed by the PolicyEngine UK
+        model
       </p>
     </FadeIn>
   );
@@ -358,11 +358,10 @@ function Introduction() {
         from learned statistical patterns, and an answer may be partly or wholly wrong.
       </p>
       <p>
-        PolicyEngine therefore built UK Chat, an AI chat interface that combines conversational AI with
-        PolicyEngine&apos;s deterministic rules and simulation engine. A language model interprets an
-        open-ended request and proposes a structured plan. The gateway checks the proposed inputs and output
-        against the current PolicyEngine catalogue; only then do deterministic tools compute quantitative
-        policy results from actual tax and benefit rules.
+        PolicyEngine therefore built UK Chat, an AI interface to PolicyEngine&apos;s deterministic rules and
+        simulation engine. A language model interprets an open-ended request and proposes a structured plan.
+        The gateway checks the proposed inputs and output against the current PolicyEngine catalogue; only
+        then do deterministic tools compute quantitative policy results from actual tax and benefit rules.
       </p>
     </FadeIn>
   );
