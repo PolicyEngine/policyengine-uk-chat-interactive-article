@@ -1,7 +1,6 @@
 # PolicyEngine UK Chat interactive article
 
-A standalone interactive version of “PolicyEngine UK Chat: a new conversational interface for understanding tax
-and benefits”.
+A standalone interactive version of “PolicyEngine UK Chat: an AI interface for tax and benefits”.
 
 The presentation structure is adapted from PolicyEngine's interactive “Automating Tax and Benefit Policy Modeling
 with Multi-Agent AI” article. Its original, editable React source is the
@@ -12,7 +11,8 @@ with Multi-Agent AI” article. Its original, editable React source is the
 - adapts the original article's scrollytelling structure and committed production stylesheet;
 - keeps the new implementation as maintainable React source;
 - replaces the original narrative, interactive data, and diagrams with the current UK Chat article;
-- keeps the current Markdown article in `content/current-article.md` as the canonical editorial reference.
+- keeps a Markdown copy of the article prose in `content/current-article.md` for editorial review. The
+  page in `src/` is canonical; regenerate the Markdown when the prose changes rather than editing both.
 
 The exact production files committed for the older article are preserved byte-for-byte in
 `reference/encode-policy-original/`. They are reference artefacts, not the editable source of this app.
