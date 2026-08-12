@@ -561,8 +561,11 @@ function BoundaryDiagram() {
         strokeLinecap="round"
         markerEnd="url(#boundary-arrow)"
       />
+      {/* Simulate sits above and to the right of Weighted outputs, so this drops
+          out of its base and sweeps into the top edge rather than turning a hard
+          corner and nosing into the right edge with a 6px stub. */}
       <path
-        d="M775 144 L775 204 L769 204"
+        d="M775 144 C775 158 690 158 690 172"
         className="boundary-connector"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -985,7 +988,6 @@ function ArchitectureScrolly() {
               </span>
             </div>
             <div className="example-body">
-              <div className="diagram-title">Verified, tool-backed answer</div>
               <div className="diagram-container">
                 <RequestFlowDiagram activeStep={activeStep} />
               </div>
