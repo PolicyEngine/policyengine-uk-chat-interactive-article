@@ -132,17 +132,64 @@
   margin-bottom: 10px;
 }
 
-.request-flow-svg {
-  max-height: 520px;
+/* Specificity has to match legacy-encode-policy.css's
+   `.diagram-container .flow-diagram-svg { max-height: 320px }`, or the request
+   diagram renders at ~54% and its labels become unreadable. The viewport clamp
+   keeps the sticky panel inside the window on short screens. */
+.diagram-container .request-flow-svg {
+  max-height: min(560px, calc(100vh - 240px));
 }
 
 .timeline-phases {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* The legacy connector is a single absolutely-positioned line across the whole
+   grid, which only ever covers the first row. With six stages on three columns
+   that leaves rows 2 (stages 4-6) unconnected, so draw the connector per stage
+   instead: each one reaches from its own number to the next column's. */
 .timeline-phases::before {
-  left: 8%;
-  right: 8%;
+  display: none;
+}
+
+.timeline-phase::before {
+  background: var(--accent);
+  content: '';
+  height: 3px;
+  left: 50%;
+  position: absolute;
+  top: 25px;
+  width: calc(100% + 20px);
+  z-index: 0;
+}
+
+/* The last stage in a row runs on to the grid edge and the first stage of the
+   next row picks the line up from the left edge, so the connector reads as
+   wrapping onto the following row rather than stopping at stage 3. */
+.timeline-phase:nth-child(3n)::before {
+  width: 50%;
+}
+
+.timeline-phase:nth-child(3n + 1):not(:first-child)::after {
+  background: var(--accent);
+  content: '';
+  height: 3px;
+  left: 0;
+  position: absolute;
+  top: 25px;
+  width: 50%;
+  z-index: 0;
+}
+
+/* Source order matters: this has to beat the :nth-child(3n) width above so the
+   final stage terminates instead of trailing off the edge. */
+.timeline-phase:last-child::before {
+  display: none;
+}
+
+.timeline-phase-num {
+  position: relative;
+  z-index: 1;
 }
 
 .timeline-phase-card {
@@ -367,7 +414,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .timeline-phases::before {
+  .timeline-phase::before,
+  .timeline-phase::after {
     display: none;
   }
 }

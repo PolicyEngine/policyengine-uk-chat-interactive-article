@@ -491,7 +491,7 @@ function RequestFlowDiagram({ activeStep }) {
               y={y + 34}
               textAnchor="middle"
               fontFamily="JetBrains Mono, monospace"
-              fontSize="13"
+              fontSize="14"
               fontWeight="700"
               fill={active ? '#0d7377' : '#ffffff'}
             >
@@ -499,9 +499,9 @@ function RequestFlowDiagram({ activeStep }) {
             </text>
             <text
               x="124"
-              y={y + 26}
+              y={y + 25}
               fontFamily="JetBrains Mono, monospace"
-              fontSize="14"
+              fontSize="16"
               fontWeight="600"
               fill={active ? '#ffffff' : '#1e3a3a'}
             >
@@ -509,9 +509,9 @@ function RequestFlowDiagram({ activeStep }) {
             </text>
             <text
               x="124"
-              y={y + 44}
+              y={y + 45}
               fontFamily="Source Serif 4, Georgia, serif"
-              fontSize="11"
+              fontSize="12.5"
               fill={active ? '#e7f5f4' : '#4a6363'}
             >
               {step.segment}
@@ -521,29 +521,29 @@ function RequestFlowDiagram({ activeStep }) {
       })}
 
       <path
-        d="M338 231 C350 231 352 231 362 231"
+        d="M338 231 C346 231 348 231 354 231"
         fill="none"
         stroke="#0d7377"
         strokeWidth="2"
         markerEnd="url(#request-arrow)"
       />
-      <rect x="368" y="205" width="104" height="52" rx="9" fill="#e7f5f4" stroke="#0d7377" />
+      <rect x="360" y="205" width="116" height="52" rx="9" fill="#e7f5f4" stroke="#0d7377" />
       <text
-        x="420"
+        x="418"
         y="226"
         textAnchor="middle"
         fontFamily="JetBrains Mono, monospace"
-        fontSize="10"
+        fontSize="11"
         fill="#0d7377"
       >
         non-ready paths
       </text>
       <text
-        x="420"
+        x="418"
         y="244"
         textAnchor="middle"
         fontFamily="Source Serif 4, Georgia, serif"
-        fontSize="10"
+        fontSize="11"
         fill="#4a6363"
       >
         clarify · explain
@@ -557,11 +557,11 @@ function RequestFlowDiagram({ activeStep }) {
         markerEnd="url(#request-arrow)"
       />
       <text
-        x="429"
-        y="396"
+        x="404"
+        y="437"
         textAnchor="middle"
         fontFamily="JetBrains Mono, monospace"
-        fontSize="10"
+        fontSize="11"
         fill="#4a6363"
       >
         tool-result loop
@@ -769,22 +769,22 @@ function WorkedExample() {
             <tbody>
               <tr>
                 <th scope="row">Tax revenue</th>
-                <td>+£181.0 million</td>
+                <td>+£0.2 billion</td>
               </tr>
               <tr>
                 <th scope="row">Benefit spending</th>
-                <td>+£1.131 billion</td>
+                <td>+£1.1 billion</td>
               </tr>
               <tr className="worked-result-total">
                 <th scope="row">Net budgetary impact</th>
-                <td>−£949.7 million</td>
+                <td>−£0.9 billion</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="worked-result-note">
-          A negative net budgetary impact means a cost to government. Figures are rounded, so displayed
-          components may not sum exactly.
+          A negative net budgetary impact means a cost to government. Figures are rounded to the nearest £0.1
+          billion.
         </p>
       </section>
       <p>
