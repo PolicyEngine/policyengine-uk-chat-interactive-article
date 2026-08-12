@@ -1223,8 +1223,8 @@ function NextStepsAndTryIt() {
       <p>
         We want to widen the range of reforms covered by typed tools, improve the speed and inspectability of
         more specialised analyses, and keep expanding the evidence the gateway can resolve before calculation.
-        UK Chat also works alongside PolicyEngine&apos;s wider Claude integration and plugin ecosystem for
-        researchers building their own analyses.
+        UK Chat also works alongside PolicyEngine&apos;s wider generative AI integrations and plugin ecosystem
+        for researchers building their own analyses.
       </p>
       <h2>Try it yourself</h2>
       <p>
