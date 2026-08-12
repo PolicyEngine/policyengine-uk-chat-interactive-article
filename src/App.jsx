@@ -561,15 +561,18 @@ function BoundaryDiagram() {
         strokeLinecap="round"
         markerEnd="url(#boundary-arrow)"
       />
-      {/* Simulate sits above and to the right of Weighted outputs, so this drops
-          out of its base and sweeps into the top edge rather than turning a hard
-          corner and nosing into the right edge with a 6px stub. */}
-      <path
-        d="M775 144 C775 158 690 158 690 172"
+      {/* Simulate (x 700-850) and Weighted outputs (x 615-765) overlap between
+          700 and 765, so the two are joined by a plain vertical drop through the
+          middle of that overlap. Curving between their centres put the head in
+          at an angle, floating short of the box. */}
+      <line
+        x1="732"
+        y1="144"
+        x2="732"
+        y2="172"
         className="boundary-connector"
         strokeWidth="1.8"
         strokeLinecap="round"
-        fill="none"
         markerEnd="url(#boundary-arrow)"
       />
       <line
@@ -615,6 +618,12 @@ function Boundary() {
         generated from the installed engine: its capabilities and its parameter schema. What the model
         believes it can compute is therefore tied to the deployed version of PolicyEngine, not to a
         hand-written prompt that drifts out of date.
+      </p>
+      <p>
+        The gateway is what sits on that line. It takes the plan the model proposes and decides whether it may
+        cross into the deterministic side. That is why the rest of this article describes the system in three
+        parts rather than two: the model, the gateway, and the tools a plan reaches once the gateway admits
+        it.
       </p>
     </FadeIn>
   );
@@ -1147,8 +1156,8 @@ function WhatYouCanAsk() {
     <FadeIn>
       <h2>What you can ask</h2>
       <p>
-        Four kinds of question are supported today, and they compose: a thread can move from a household
-        example to a full reform analysis to a chart without switching tools.
+        The Child Benefit reform above is one of four kinds of question supported today, and they compose: a
+        thread can move from a household example to a full reform analysis to a chart without switching tools.
       </p>
       <CardTabs
         idPrefix="question-kind"
