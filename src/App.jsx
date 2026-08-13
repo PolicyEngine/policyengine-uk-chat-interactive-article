@@ -8,7 +8,7 @@ const toolFamilies = [
   {
     name: 'Discovery',
     summary: 'Find exact variables, parameters, entities, reform targets, and supported outputs.',
-    purpose: 'Discovery keeps the model from guessing the names of things in PolicyEngine.',
+    purpose: 'Discovery keeps the language model from guessing the names of things in PolicyEngine.',
     tools: [
       {
         name: 'list_entities',
@@ -146,7 +146,7 @@ const questionKinds = [
     summary: 'Illustrative calculations',
     question: 'A single parent, two children, earning £28,000 — what do they take home?',
     description:
-      'The household is constructed as a synthetic input, validated, and run through the model to produce taxes, benefits, and net income under stated assumptions. One household containing one benefit unit per call; more complex arrangements need separate calls.',
+      'The household is constructed as a synthetic input, validated, and run through the PolicyEngine UK model to produce taxes, benefits, and net income under stated assumptions. One household containing one benefit unit per call; more complex arrangements need separate calls.',
     tools: ['list_household_input_variables', 'validate_household', 'run_household_simulation'],
   },
   {
@@ -202,9 +202,9 @@ const requestSteps = [
     body: (
       <>
         <p>
-          A fast model reads the user&apos;s words and proposes a structured description of the request. It
-          separates inputs the user supplied from the output they asked for and suggests which tools may be
-          needed. This is an interpretation, not yet permission to calculate.
+          A fast language model reads the user&apos;s words and proposes a structured description of the
+          request. It separates inputs the user supplied from the output they asked for and suggests which
+          tools may be needed. This is an interpretation, not yet permission to calculate.
         </p>
       </>
     ),
@@ -286,13 +286,14 @@ const requestSteps = [
     body: (
       <>
         <p>
-          A model selected for the request&apos;s type and size executes the verified plan through one or more
-          of 21 public tools. Simulation tools apply the tax and benefit rules; analysis tools derive budget,
-          programme, distributional, poverty, inequality, or gain-and-loss results from a stored simulation.
+          A language model selected for the request&apos;s type and size executes the verified plan through
+          one or more of 21 public tools. Simulation tools apply the tax and benefit rules; analysis tools
+          derive budget, programme, distributional, poverty, inequality, or gain-and-loss results from a
+          stored simulation.
         </p>
         <p>
-          The model chooses and sequences tools, but it does not supply the figures. Each number comes back as
-          tool data produced by the PolicyEngine UK model.
+          The language model chooses and sequences tools, but it does not supply the figures. Each number
+          comes back as tool data produced by the PolicyEngine UK model.
         </p>
       </>
     ),
@@ -311,8 +312,8 @@ const requestSteps = [
         </p>
         <p>
           The tool loop remains bounded by a 30-round cap, repeated-call detection, result-size limits, and
-          explicit terminal events. Tool errors return as data so the model can recover without inventing a
-          result.
+          explicit terminal events. Tool errors return as data so the language model can recover without
+          inventing a result.
         </p>
       </>
     ),
@@ -379,9 +380,9 @@ function Problem() {
         that apply to the household&apos;s circumstances.
       </p>
       <p>
-        Prompting does not make a model apply tax and benefit rules. Telling it to state only “real” figures
-        changes the wording, not the source of the calculation. The answer reads the same whether it is right
-        or wrong, so prose alone cannot verify it. The UK Parliament&apos;s{' '}
+        Prompting does not make a language model apply tax and benefit rules. Telling it to state only “real”
+        figures changes the wording, not the source of the calculation. The answer reads the same whether it
+        is right or wrong, so prose alone cannot verify it. The UK Parliament&apos;s{' '}
         <a href="https://post.parliament.uk/research-briefings/post-pn-0708/">
           Parliamentary Office of Science and Technology
         </a>{' '}
@@ -392,7 +393,7 @@ function Problem() {
         <a href="https://www.nao.org.uk/reports/use-of-artificial-intelligence-in-government/">
           National Audit Office&apos;s review of AI in government
         </a>{' '}
-        illustrates. Anyone comparing two reforms needs figures from a fixed model, not an AI&apos;s
+        illustrates. Anyone comparing two reforms needs figures from a fixed microsimulation, not an AI&apos;s
         recollection of figures it has seen. The same applies to a household working out how a reform affects
         its income: the figure has to come from clear rules, with assumptions written down, so that it can be
         checked.
@@ -402,10 +403,10 @@ function Problem() {
         <a href="https://policyengine.org/us/research/introducing-policybench">PolicyBench</a>, an evaluation
         built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits
         from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. In
-        the launch results the top model matched PolicyEngine exactly on <strong>80.3%</strong> of its scored
-        outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility flags,
-        because getting it right means sequencing income concepts, thresholds, exclusions, and credits in the
-        correct order.
+        the launch results the top language model matched PolicyEngine exactly on <strong>80.3%</strong> of
+        its scored outputs. Computed amounts scored lowest: income tax before credits scored far below
+        eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions,
+        and credits in the correct order.
       </p>
     </FadeIn>
   );
@@ -417,7 +418,7 @@ function BoundaryDiagram() {
       className="agent-flow-svg boundary-flow-svg"
       viewBox="0 0 900 300"
       role="img"
-      aria-label="The boundary between the predictive AI layer and the deterministic PolicyEngine engine: the model interprets the question and calls typed tools; the engine validates, simulates, and computes; the model then explains the returned numbers."
+      aria-label="The boundary between the predictive AI layer and the deterministic PolicyEngine engine: the language model interprets the question and calls typed tools; the engine validates, simulates, and computes; the language model then explains the returned numbers."
     >
       <defs>
         {/* A slightly concave, offset head reads as an arrow rather than a
@@ -614,22 +615,22 @@ function Boundary() {
       <p>
         The <strong>deterministic</strong> parts are the ones users need to be able to check: validating the
         request, looking up parameters, constructing household inputs, running simulations, computing weighted
-        outputs, and producing chart data. None of these depends on model memory. The runtime enforces the
-        boundary rather than asking the model to respect it in a prompt.
+        outputs, and producing chart data. None of these depends on the language model&apos;s memory. The
+        runtime enforces the boundary rather than asking the language model to respect it in a prompt.
       </p>
       <div className="agent-flow-container boundary-flow-container">
         <BoundaryDiagram />
       </div>
       <p>
-        When a question is ready for computation, the model receives the calculation tools plus a reference
-        generated from the installed engine: the engine's capabilities and parameter schema. What the model
-        can be asked to compute is therefore tied to the deployed version of PolicyEngine, not to a
-        hand-written prompt that drifts out of date.
+        When a question is ready for computation, the language model receives the calculation tools plus a
+        machine-readable description of what the deployed engine can compute: its capabilities and parameter
+        schema. What the language model can be asked to compute is therefore tied to the deployed version of
+        PolicyEngine, not to a hand-written prompt that drifts out of date.
       </p>
       <p>
-        The gateway sits on that line. It takes the plan the model proposes and decides whether it may cross
-        into the deterministic side, which is why the system has three parts rather than two: the model, the
-        gateway, and the tools a plan reaches once the gateway admits it.
+        The gateway sits on that line. It takes the plan the language model proposes and decides whether it
+        may cross into the deterministic side, which is why the system has three parts rather than two: the
+        language model, the gateway, and the tools a plan reaches once the gateway admits it.
       </p>
     </FadeIn>
   );
@@ -730,7 +731,7 @@ function ToolExplorer() {
 
   return (
     <FadeIn>
-      <h2>The model proposes a plan</h2>
+      <h2>The language model proposes a plan</h2>
       <p>
         UK Chat breaks the user pathway into three segments: the AI model, the gateway, and supporting tools.
       </p>
@@ -748,11 +749,11 @@ function ToolExplorer() {
       <h2>Tools make the calculation deterministic</h2>
       <p>
         At this point, UK Chat has a gateway-verified plan, and every figure in the answer comes from the
-        tools that plan calls rather than from the model.
+        tools that plan calls rather than from the language model.
       </p>
       <p>
-        The tools UK Chat exposes to the model are limited in scope. They fall into five types, each keeping
-        the model within supported operations while it creates, verifies, or executes a plan.
+        The tools UK Chat exposes to the language model are limited in scope. They fall into five types, each
+        keeping it within supported operations while it creates, verifies, or executes a plan.
       </p>
 
       <CardTabs
@@ -1211,7 +1212,7 @@ function Limitations() {
     <FadeIn>
       <h2>Limitations</h2>
       <p>
-        The chat is a <strong>modelling tool, not advice</strong>. It reports what the model calculates under
+        The chat is a <strong>modelling tool, not advice</strong>. It reports what the engine calculates under
         stated assumptions, and it is not a substitute for professional guidance on an individual&apos;s
         circumstances.
       </p>
@@ -1247,12 +1248,7 @@ function NextStepsAndTryIt() {
         that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset,
         comparator, and method alongside the answer.
       </p>
-      <a
-        className="article-cta"
-        href="https://policyengine-uk-chat.vercel.app/uk/chat"
-        target="_blank"
-        rel="noreferrer"
-      >
+      <a className="article-cta" href="https://policyengine.org/uk/chat" target="_blank" rel="noreferrer">
         Try PolicyEngine UK Chat
       </a>
     </FadeIn>
