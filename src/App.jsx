@@ -13,41 +13,107 @@ const toolFamilies = [
       {
         name: 'list_entities',
         summary: 'Lists the PolicyEngine UK model entities and the number of variables defined for each one.',
+        call: 'list_entities()',
+        returns: `{
+  "status": "success",
+  "entities": [{ "name": "person", "variable_count": … }, …]
+}`,
       },
       {
         name: 'search_variables',
         summary:
           'Searches the UK variable registry and identifies each match’s entity and default-output status.',
+        call: `search_variables(
+  query="employment income",
+  entity="person"
+)`,
+        returns: `{
+  "variables": [
+    { "name": "employment_income", "entity": "person",
+      "value_type": "float", "definition_period": "year" }
+  ]
+}`,
       },
       {
         name: 'get_variable',
         summary:
           'Verifies one exact UK variable and returns its metadata, entity, and default-output status.',
+        call: 'get_variable(name="household_net_income")',
+        returns: `{
+  "variable": {
+    "name": "household_net_income", "entity": "household",
+    "value_type": "float", "is_default_society_output": true
+  }
+}`,
       },
       {
         name: 'search_parameters',
         summary: 'Searches policy parameters by path, label, description, or known alias.',
+        call: 'search_parameters(query="personal allowance")',
+        returns: `{
+  "parameters": [
+    { "path": "gov.hmrc.income_tax.allowances.personal_allowance.amount",
+      "unit": "currency-GBP", "aliases": ["personal allowance", …] }
+  ]
+}`,
       },
       {
         name: 'get_parameter',
         summary:
           'Looks up one exact policy parameter and returns its metadata and value for a selected year.',
+        call: `get_parameter(
+  path="gov.hmrc.income_tax.allowances.personal_allowance.amount",
+  year=2026
+)`,
+        returns: `{
+  "parameter": {
+    "unit": "currency-GBP", "year": 2026,
+    "value": …the 2026 allowance in the deployed package…
+  }
+}`,
       },
       {
         name: 'list_reform_targets',
         summary: 'Searches the current catalogue for parameter paths that can be used in a reform.',
+        call: 'list_reform_targets(query="universal credit standard allowance")',
+        returns: `{
+  "targets": [
+    { "path": "gov.dwp.universal_credit.standard_allowance.amount.SINGLE_OLD",
+      "aliases": ["universal credit standard allowance", …] }
+  ]
+}`,
       },
       {
         name: 'list_household_input_variables',
         summary: 'Lists known variables that can be supplied as overrides for an illustrative household.',
+        call: 'list_household_input_variables(entity="person")',
+        returns: `{
+  "entity": "person",
+  "variables": [{ "name": "employment_income", … }, …],
+  "input_contract": "policyengine.py accepts any known variable on its declared entity…"
+}`,
       },
       {
         name: 'list_society_output_variables',
         summary: 'Lists the variables a society simulation materialises by default, grouped by entity.',
+        call: 'list_society_output_variables(entity="household")',
+        returns: `{
+  "default_variables_by_entity": {
+    "household": ["household_net_income", "household_tax", "household_benefits", …]
+  },
+  "default_variable_count": …
+}`,
       },
       {
         name: 'list_supported_outputs',
         summary: 'Lists the household, society, derivative, and chart outputs supported by the chat runtime.',
+        call: 'list_supported_outputs(scope="derivative")',
+        returns: `{
+  "scope": "derivative",
+  "outputs": [
+    { "scope": "derivative", "name": "budgetary_impact", "description": … }, …
+  ]
+}`,
       },
     ],
   },
@@ -59,10 +125,28 @@ const toolFamilies = [
       {
         name: 'validate_reform',
         summary: 'Validates flat PolicyEngine reform JSON for a selected year without running a simulation.',
+        call: `validate_reform(
+  reform={ "gov.hmrc.income_tax.allowances.personal_allowance.amount": 15000 },
+  year=2026
+)`,
+        returns: `{
+  "valid": true,
+  "parameter_paths": ["gov.hmrc.income_tax.allowances.personal_allowance.amount"],
+  "warnings": []
+}`,
       },
       {
         name: 'validate_household',
         summary: 'Validates an illustrative synthetic UK household against PolicyEngine variable metadata.',
+        call: `validate_household(
+  people=[{ "age": 35, "employment_income": 28000 }, { "age": 6 }, { "age": 3 }],
+  household={ "country": "ENGLAND" }
+)`,
+        returns: `{
+  "valid": true,
+  "year": 2026,
+  "people_count": 3, "warnings": []
+}`,
       },
     ],
   },
@@ -74,11 +158,29 @@ const toolFamilies = [
       {
         name: 'run_household_simulation',
         summary: 'Runs an illustrative synthetic household through the PolicyEngine UK tax-benefit model.',
+        call: `run_household_simulation(
+  people=[{ "age": 35, "employment_income": 28000 }, { "age": 6 }, { "age": 3 }],
+  household={ "country": "ENGLAND" }
+)`,
+        returns: `{
+  "reform_applied": false,
+  "household": { "household_net_income": …, "household_tax": … },
+  "result_id": "household_simulation_…"
+}`,
       },
       {
         name: 'run_society_simulation',
         summary:
           'Runs baseline and reform UK simulations and returns metadata plus a turn-local result handle.',
+        call: `run_society_simulation(
+  reform={ "gov.hmrc.income_tax.allowances.personal_allowance.amount": 15000 },
+  year=2026
+)`,
+        returns: `{
+  "year": 2026, "reform_applied": true,
+  "dataset": { "label": "Enhanced FRS 2024-25", "row_level_access": false },
+  "result_id": "society_simulation_…"
+}`,
       },
     ],
   },
@@ -92,35 +194,94 @@ const toolFamilies = [
         name: 'compute_budgetary_impact',
         summary:
           'Calculates changes in tax revenue, benefit spending, and the net budgetary impact of a reform.',
+        call: 'compute_budgetary_impact(simulation_id="society_simulation_…")',
+        returns: `{
+  "tax_revenue": { "baseline": …, "reform": …, "change": … },
+  "benefit_spending": { "baseline": …, "reform": …, "change": … },
+  "net_budgetary_impact": …, "result_id": "budgetary_impact_…"
+}`,
       },
       {
         name: 'compute_program_breakdown',
         summary:
           'Calculates programme-level totals, caseloads, winners, and losers from a society simulation.',
+        call: `compute_program_breakdown(
+  simulation_id="society_simulation_…",
+  programs=["child_benefit", "universal_credit"]
+)`,
+        returns: `{
+  "programs": [
+    { "program": "universal_credit", "is_tax": false,
+      "change": …, "baseline_count": …, "winners": …, "losers": … }, …
+  ]
+}`,
       },
       {
         name: 'compute_decile_impacts',
         summary:
           'Calculates changes in mean household income across a selected income- or wealth-decile concept.',
+        call: `compute_decile_impacts(
+  simulation_id="society_simulation_…",
+  decile_concept="household_net_income"
+)`,
+        returns: `{
+  "measure_label": "household net income",
+  "grouping_label": "Household net income decile",
+  "deciles": [{ "decile": 1, "absolute_change": …, "relative_change": … }, …]
+}`,
       },
       {
         name: 'compute_winners_losers',
         summary:
           'Calculates people-weighted gain, loss, and no-change shares within income or wealth deciles.',
+        call: `compute_winners_losers(
+  simulation_id="society_simulation_…",
+  basis="income"
+)`,
+        returns: `{
+  "grouping_label": "Income decile",
+  "deciles": [
+    { "decile": 1, "gain_more_than_5pct": …, "no_change": …, … }, …
+  ]
+}`,
       },
       {
         name: 'compute_poverty_metrics',
         summary: 'Calculates UK poverty rates and headcounts overall and by age under baseline and reform.',
+        call: 'compute_poverty_metrics(simulation_id="society_simulation_…")',
+        returns: `{
+  "rates": [
+    { "poverty_type": "relative_bhc", "group": "all", "baseline_rate": …,
+      "reform_rate": …, "rate_change": …, "baseline_headcount": … }, …
+  ]
+}`,
       },
       {
         name: 'compute_inequality_metrics',
         summary:
           'Calculates the Gini coefficient and changes in the top 10%, top 1%, and bottom 50% income shares.',
+        call: 'compute_inequality_metrics(simulation_id="society_simulation_…")',
+        returns: `{
+  "metrics": {
+    "gini": { "baseline": …, "reform": …, "change": …, "relative_change": … },
+    "top_10_share": { … }, "top_1_share": { … }, "bottom_50_share": { … }
+  }
+}`,
       },
       {
         name: 'aggregate_result',
         summary:
           'Calculates a weighted sum, mean, or count for a verified variable without returning survey rows.',
+        call: `aggregate_result(
+  simulation_id="society_simulation_…",
+  entity="household", variable="household_id", operation="count",
+  filter_variable="benunit_count_children", filter_variable_geq=3
+)`,
+        returns: `{
+  "result": { "operation": "count", "target": "reform",
+    "filter_variable_geq": 3, "value": … },
+  "privacy": "Aggregate only; no row-level records returned."
+}`,
       },
     ],
   },
@@ -134,6 +295,16 @@ const toolFamilies = [
         name: 'generate_chart',
         summary:
           'Generates frontend-renderable chart markdown from a stored result or constrained chart data.',
+        call: `generate_chart(
+  chart_kind="decile_relative_bar",
+  result_id="decile_impacts_…",
+  title="Change in household net income by decile"
+)`,
+        returns: `{
+  "chart_markdown": …a fenced chart block, included verbatim in the answer…,
+  "spec": { "type": "preset", "preset": "decile_relative_bar",
+    "groupLabel": "Household net income decile", "data": [ … ] }
+}`,
       },
     ],
   },
@@ -211,7 +382,7 @@ const traceSteps = [
             </div>
             <div className="example-output-line">
               <span className="icon">·</span>
-              <span>“eldest-child rate” is an alias the catalogue resolves</span>
+              <span>“eldest-child rate” matches the parameter’s catalogue label</span>
             </div>
           </div>
         </div>
@@ -338,14 +509,18 @@ const traceSteps = [
           <div className="example-section-title">returned to the language model</div>
           <pre className="example-code">
             {'{\n  '}
-            <span className="string">&quot;simulation_id&quot;</span>
+            <span className="string">&quot;result_id&quot;</span>
             {': '}
-            <span className="string">&quot;sim_…&quot;</span>
+            <span className="string">&quot;society_simulation_…&quot;</span>
             {',\n  '}
             <span className="string">&quot;dataset&quot;</span>
+            {': { '}
+            <span className="string">&quot;label&quot;</span>
             {': '}
-            <span className="string">&quot;enhanced_frs&quot;</span>
-            {',\n  '}
+            <span className="string">&quot;Enhanced FRS 2024-25&quot;</span>
+            {', '}
+            <span className="comment">…</span>
+            {' },\n  '}
             <span className="string">&quot;year&quot;</span>
             {': '}
             <span className="number">2026</span>
@@ -383,7 +558,7 @@ const traceSteps = [
           <pre className="example-code">
             <span className="keyword">compute_budgetary_impact</span>
             {'(\n  simulation_id='}
-            <span className="string">&quot;sim_…&quot;</span>
+            <span className="string">&quot;society_simulation_…&quot;</span>
             {'\n)'}
           </pre>
         </div>
@@ -446,6 +621,15 @@ const requestSteps = [
         </p>
       </>
     ),
+    example: {
+      callTitle: 'the user’s message',
+      call: `last_user_message="For 2026, set the Child Benefit eldest-child rate
+  to £30 a week and show the annual budgetary impact"`,
+      returnsTitle: 'proposed plan',
+      returns: `{ "domain_status": "uk_or_unspecified", "capability_status": "supported",
+  "tool": "compute_budgetary_impact",
+  "catalogue_queries": [{ "kind": "reform_target", "query": "eldest-child rate" }] }`,
+    },
   },
   {
     number: 2,
@@ -466,6 +650,17 @@ const requestSteps = [
         </p>
       </>
     ),
+    example: {
+      callTitle: 'catalogue query',
+      call: `resolve_catalogue_queries([
+  { "kind": "reform_target", "query": "eldest-child rate" }
+])`,
+      returnsTitle: 'match',
+      returns: `{
+  "identifier": "gov.hmrc.child_benefit.amount.eldest",
+  "match_type": "strong_phrase", "score": 0.9, "authoritative": true
+}`,
+    },
   },
   {
     number: 3,
@@ -506,6 +701,18 @@ const requestSteps = [
         </ul>
       </>
     ),
+    example: {
+      callTitle: 'gated plan',
+      call: `gate(
+  in_domain=true, tool="compute_budgetary_impact",
+  unmodellable_outputs=[]
+)`,
+      returnsTitle: 'verdict',
+      returns: `{
+  "outcome": "ready",
+  "gating_reasons": []
+}`,
+    },
   },
   {
     number: 4,
@@ -526,6 +733,18 @@ const requestSteps = [
         </p>
       </>
     ),
+    example: {
+      callTitle: 'resolver construction',
+      call: `emit_reform_assessment(
+  reform={ "gov.hmrc.child_benefit.amount.eldest": 30.0 },
+  confidence=95
+)`,
+      returnsTitle: 'approved for this turn',
+      returns: `{
+  "approved_reform": { "gov.hmrc.child_benefit.amount.eldest": 30.0 },
+  "require_approved_reform": true
+}`,
+    },
   },
   {
     number: 5,
@@ -546,6 +765,17 @@ const requestSteps = [
         </p>
       </>
     ),
+    example: {
+      callTitle: 'plan handed to the tool loop',
+      call: `Required tool order: run_society_simulation -> compute_budgetary_impact.
+Runtime handoff: pass the result_id returned by run_society_simulation
+  as simulation_id to the target derivative.`,
+      returnsTitle: 'each tool result',
+      returns: `{
+  "type": "tool_result", "tool_use_id": …,
+  "content": …the tool’s JSON, capped at 15,000 characters…
+}`,
+    },
   },
   {
     number: 6,
@@ -566,8 +796,65 @@ const requestSteps = [
         </p>
       </>
     ),
+    example: {
+      callTitle: 'turn events',
+      call: 'ToolStarted → ToolUsed → ToolCompleted → TextChunk → TurnCompleted',
+      returnsTitle: 'server-sent frames',
+      returns: `data: { "type": "tool_use", "tool_name": "compute_budgetary_impact",
+        "status": "pending" }
+data: { "type": "done", "content": …, "stop_reason": …, "usage": { … } }`,
+    },
   },
 ];
+
+/* The tool and stage examples are stored as literal source strings rather than
+   as hand-tagged JSX, so that all 27 of them stay short and comparable. This
+   applies the same token classes the call trace above marks up by hand: an
+   elision written between ellipses reads as a comment, and everything else is a
+   string, a literal, or the name of the thing being called. A phrase elision
+   may not span JSON punctuation, or two separate elisions on one line would be
+   read as a single comment running through the fields between them. */
+const EXAMPLE_TOKENS =
+  /(…[^…\n{}":]*…|…)|("(?:[^"\\]|\\.)*")|\b(true|false|null|\d+(?:\.\d+)?)\b|\b([a-z_][a-z0-9_]*)(?=\()/g;
+
+function ExampleCode({ children }) {
+  const nodes = [];
+  let cursor = 0;
+
+  for (const match of children.matchAll(EXAMPLE_TOKENS)) {
+    if (match.index > cursor) {
+      nodes.push(children.slice(cursor, match.index));
+    }
+    const [token, comment, string, literal] = match;
+    nodes.push(
+      <span
+        className={comment ? 'comment' : string ? 'string' : literal ? 'number' : 'keyword'}
+        key={match.index}
+      >
+        {token}
+      </span>,
+    );
+    cursor = match.index + token.length;
+  }
+  nodes.push(children.slice(cursor));
+
+  return <pre className="example-code">{nodes}</pre>;
+}
+
+function ExampleExchange({ className, callTitle, call, returnsTitle, returns }) {
+  return (
+    <div className={className}>
+      <div className="example-section">
+        <div className="example-section-title">{callTitle}</div>
+        <ExampleCode>{call}</ExampleCode>
+      </div>
+      <div className="example-section">
+        <div className="example-section-title">{returnsTitle}</div>
+        <ExampleCode>{returns}</ExampleCode>
+      </div>
+    </div>
+  );
+}
 
 function FadeIn({ children, delay = 0, className }) {
   const prefersReducedMotion = useReducedMotion();
@@ -1078,6 +1365,13 @@ function ToolExplorer() {
         <div className="tool-summary" aria-live="polite" aria-atomic="true">
           <div className="tool-summary-name">{activeTool.name}</div>
           <p>{activeTool.summary}</p>
+          <ExampleExchange
+            className="tool-example"
+            callTitle="example call"
+            call={activeTool.call}
+            returnsTitle="returns"
+            returns={activeTool.returns}
+          />
         </div>
       </CardTabs>
     </FadeIn>
@@ -1273,7 +1567,10 @@ function ArchitectureScrolly() {
                 </span>
                 <span className="step-segment">{step.segment}</span>
               </div>
-              <div className="step-content">{step.body}</div>
+              <div className="step-content">
+                {step.body}
+                <ExampleExchange className="stage-example" {...step.example} />
+              </div>
             </section>
           ))}
         </div>
@@ -1325,57 +1622,6 @@ function CallTrace() {
 }
 
 function WorkedExample() {
-  const phases = [
-    {
-      number: 1,
-      title: 'Ground',
-      segment: 'Language model',
-      agents: ['£30 a week', '2026', 'budgetary impact'],
-      description:
-        'Extract the requested value, policy year, and output from the user’s exact words, while keeping the proposed plan separate from verified facts.',
-    },
-    {
-      number: 2,
-      title: 'Resolve',
-      segment: 'Gateway',
-      agents: ['catalogue search', 'exact parameter'],
-      description:
-        'Bind “eldest-child rate” to gov.hmrc.child_benefit.amount.eldest in the current catalogue and confirm that budgetary impact is supported.',
-    },
-    {
-      number: 3,
-      title: 'Gate',
-      segment: 'Gateway',
-      agents: ['ready', 'all inputs explicit'],
-      description:
-        'Classify the plan as ready because its required policy, value, year, and output are present and supported. Only this outcome opens the calculation loop.',
-    },
-    {
-      number: 4,
-      title: 'Verify',
-      segment: 'Gateway',
-      agents: ['effective 1 January 2026', 'validate_reform'],
-      description:
-        'Construct an exact dated reform that sets the parameter to 30.0 pounds per week, then validate it against the PolicyEngine UK rules engine before simulation.',
-    },
-    {
-      number: 5,
-      title: 'Calculate',
-      segment: 'Supporting tools',
-      agents: ['run_society_simulation', 'compute_budgetary_impact'],
-      description:
-        'Run current law and the approved reform on the same population, store the result, and pass its handle to the budgetary-impact derivative.',
-    },
-    {
-      number: 6,
-      title: 'Stream',
-      segment: 'Gateway',
-      agents: ['tool events', 'method and result'],
-      description:
-        'Stream the calculation trace and final answer with the comparator, dataset, method, and sign convention attached so the result can be inspected.',
-    },
-  ];
-
   return (
     <FadeIn>
       <h2>One reform, end to end</h2>
@@ -1384,46 +1630,16 @@ function WorkedExample() {
         budgetary impact.” The request contains a policy, a final value, a year, and an output. It does not
         contain a PolicyEngine parameter path, a reform object, or the sequence of tools needed to answer it.
       </p>
-      <div className="workflow-timeline">
-        <div className="workflow-header">
-          <div className="workflow-command-label">User request</div>
-          <div className="workflow-command">
-            For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary
-            impact
-          </div>
-        </div>
-        <div className="timeline-phases">
-          {phases.map((phase) => (
-            <article className="timeline-phase" key={phase.number}>
-              <div className="timeline-phase-header">
-                <div className="timeline-phase-num">{phase.number}</div>
-                <div className="timeline-phase-title">{phase.title}</div>
-                <div className="timeline-phase-segment">{phase.segment}</div>
-              </div>
-              <div className="timeline-phase-card">
-                <div className="timeline-agents">
-                  {phase.agents.map((agent) => (
-                    <span className="timeline-agent" key={agent}>
-                      {agent}
-                    </span>
-                  ))}
-                </div>
-                <p className="timeline-phase-desc">{phase.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
       <p>
-        Those stages describe what the system decides. Underneath, the turn is a short sequence of typed
+        The six stages above decide what the system does; underneath, the turn is a short sequence of typed
         calls, each one taking an argument that an earlier call produced. This is that sequence for the
-        request above.
+        request.
       </p>
       <CallTrace />
       <p>
         Two features of the sequence carry most of the design. The first is that{' '}
         <code>run_society_simulation</code> hands back a handle rather than data: the language model receives
-        a <code>simulation_id</code>, a dataset name, and a year, and never receives household rows, survey
+        a <code>result_id</code>, a dataset reference, and a year, and never receives household rows, survey
         weights, or any serialisable simulation object. Weighting happens inside the PolicyEngine UK model,
         and the seven analysis tools are the only route from a stored simulation to a number.
       </p>
@@ -1597,7 +1813,6 @@ function ChatCta() {
     <div className="article-cta-wrap">
       <a className="article-cta" href="https://policyengine.org/uk/chat" target="_blank" rel="noreferrer">
         Try PolicyEngine UK Chat
-        <span className="article-cta-beta">Beta</span>
       </a>
     </div>
   );
