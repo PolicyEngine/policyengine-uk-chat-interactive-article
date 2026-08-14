@@ -146,7 +146,7 @@ const questionKinds = [
     summary: 'Illustrative calculations',
     question: 'A single parent, two children, earning £28,000 — what do they take home?',
     description:
-      'The household is constructed as a synthetic input, validated, and run through the PolicyEngine UK model to produce taxes, benefits, and net income under stated assumptions. One household containing one benefit unit per call; more complex arrangements need separate calls.',
+      'The household is constructed as a synthetic input, validated, and run through the PolicyEngine UK model to produce taxes, benefits, and net income under stated assumptions. Each call covers one household containing one benefit unit. More complex arrangements need separate calls.',
     tools: ['list_household_input_variables', 'validate_household', 'run_household_simulation'],
   },
   {
@@ -178,6 +178,244 @@ const questionKinds = [
   },
 ];
 
+/* The five calls the Child Benefit request in "One reform, end to end" actually
+   makes, one per tool family bar Presentation. Identifiers are shortened and the
+   current-law rate is elided, because both come from whichever PolicyEngine UK
+   package is deployed rather than from anything fixed at publication. */
+const traceSteps = [
+  {
+    id: 'find-target',
+    stage: 'Find the target',
+    family: 'Discovery',
+    body: (
+      <>
+        <div className="example-section">
+          <div className="example-section-title">tool call</div>
+          <pre className="example-code">
+            <span className="keyword">list_reform_targets</span>
+            {'(\n  query='}
+            <span className="string">&quot;child benefit eldest&quot;</span>
+            {'\n)'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">result</div>
+          <div className="example-output">
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>gov.hmrc.child_benefit.amount.eldest</span>
+            </div>
+            <div className="example-output-line">
+              <span className="icon">·</span>
+              <span>returned from the installed UK package, not from memory</span>
+            </div>
+            <div className="example-output-line">
+              <span className="icon">·</span>
+              <span>“eldest-child rate” is an alias the catalogue resolves</span>
+            </div>
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    id: 'read-current-law',
+    stage: 'Read current law',
+    family: 'Discovery',
+    body: (
+      <>
+        <div className="example-section">
+          <div className="example-section-title">tool call</div>
+          <pre className="example-code">
+            <span className="keyword">get_parameter</span>
+            {'(\n  path='}
+            <span className="string">&quot;gov.hmrc.child_benefit.amount.eldest&quot;</span>
+            {',\n  year='}
+            <span className="number">2026</span>
+            {'\n)'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">returned</div>
+          <pre className="example-code">
+            {'{\n  '}
+            <span className="string">&quot;unit&quot;</span>
+            {': '}
+            <span className="string">&quot;currency-GBP&quot;</span>
+            {',\n  '}
+            <span className="string">&quot;period&quot;</span>
+            {': '}
+            <span className="string">&quot;week&quot;</span>
+            {',\n  '}
+            <span className="string">&quot;value&quot;</span>
+            {': '}
+            <span className="comment">…the 2026 rate in the deployed package…</span>
+            {'\n}'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">why it matters</div>
+          <div className="example-output">
+            <div className="example-output-line">
+              <span className="icon">·</span>
+              <span>the comparator is whatever the package holds, not a remembered rate</span>
+            </div>
+            <div className="example-output-line">
+              <span className="icon">·</span>
+              <span>the unit and period fix what “£30 a week” has to be written as</span>
+            </div>
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    id: 'validate',
+    stage: 'Validate',
+    family: 'Validation',
+    body: (
+      <>
+        <div className="example-section">
+          <div className="example-section-title">tool call</div>
+          <pre className="example-code">
+            <span className="keyword">validate_reform</span>
+            {'(\n  reform={\n    '}
+            <span className="string">&quot;gov.hmrc.child_benefit.amount.eldest&quot;</span>
+            {': {\n      '}
+            <span className="string">&quot;2026-01-01.2026-12-31&quot;</span>
+            {': '}
+            <span className="number">30.0</span>
+            {'\n    }\n  },\n  year='}
+            <span className="number">2026</span>
+            {'\n)'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">result</div>
+          <div className="example-output">
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>the path exists in the parameter schema</span>
+            </div>
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>30.0 is the right type for a currency-GBP parameter</span>
+            </div>
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>the date range falls inside the package&apos;s coverage</span>
+            </div>
+          </div>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">note</div>
+          <div className="example-file">
+            <span className="example-file-name">an unrecognised path</span>
+            <span className="example-file-status warning">rejected here</span>
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    id: 'simulate',
+    stage: 'Simulate',
+    family: 'Simulation',
+    body: (
+      <>
+        <div className="example-section">
+          <div className="example-section-title">tool call</div>
+          <pre className="example-code">
+            <span className="keyword">run_society_simulation</span>
+            {'(\n  reform={ '}
+            <span className="comment">…validated above…</span>
+            {' },\n  year='}
+            <span className="number">2026</span>
+            {'\n)'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">returned to the language model</div>
+          <pre className="example-code">
+            {'{\n  '}
+            <span className="string">&quot;simulation_id&quot;</span>
+            {': '}
+            <span className="string">&quot;sim_…&quot;</span>
+            {',\n  '}
+            <span className="string">&quot;dataset&quot;</span>
+            {': '}
+            <span className="string">&quot;enhanced_frs&quot;</span>
+            {',\n  '}
+            <span className="string">&quot;year&quot;</span>
+            {': '}
+            <span className="number">2026</span>
+            {'\n}'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">not returned</div>
+          <div className="example-output">
+            <div className="example-output-line error">
+              <span className="icon">✗</span>
+              <span>household rows</span>
+            </div>
+            <div className="example-output-line error">
+              <span className="icon">✗</span>
+              <span>survey weights</span>
+            </div>
+            <div className="example-output-line error">
+              <span className="icon">✗</span>
+              <span>any serialisable simulation object</span>
+            </div>
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    id: 'compute',
+    stage: 'Compute',
+    family: 'Analysis',
+    body: (
+      <>
+        <div className="example-section">
+          <div className="example-section-title">tool call</div>
+          <pre className="example-code">
+            <span className="keyword">compute_budgetary_impact</span>
+            {'(\n  simulation_id='}
+            <span className="string">&quot;sim_…&quot;</span>
+            {'\n)'}
+          </pre>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">computed inside the engine</div>
+          <div className="example-output">
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>baseline and reform totals for tax revenue and benefit spending</span>
+            </div>
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>the net budgetary impact reported below</span>
+            </div>
+            <div className="example-output-line success">
+              <span className="icon">✓</span>
+              <span>survey weights applied inside the PolicyEngine UK model</span>
+            </div>
+          </div>
+        </div>
+        <div className="example-section">
+          <div className="example-section-title">stored</div>
+          <div className="example-file">
+            <span className="example-file-name">result_id → typed handle</span>
+            <span className="example-file-status created">turn-local</span>
+          </div>
+        </div>
+      </>
+    ),
+  },
+];
+
 const authors = [
   {
     id: 'vahid-ahmadi',
@@ -198,7 +436,7 @@ const requestSteps = [
     number: 1,
     title: 'Ground',
     subtitle: 'A structured opening plan',
-    segment: 'AI model',
+    segment: 'Language model',
     body: (
       <>
         <p>
@@ -339,6 +577,7 @@ function FadeIn({ children, delay = 0, className }) {
 function Hero() {
   return (
     <FadeIn>
+      <span className="hero-beta">Beta</span>
       <h1>PolicyEngine UK Chat: an AI interface for tax and benefits</h1>
       <p className="subtitle">
         Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
@@ -353,16 +592,50 @@ function Introduction() {
     <FadeIn>
       <p>
         People are increasingly turning to AI language models to answer complex questions about tax and
-        benefit policy and reform because models can read loosely worded questions and answer them in plain
-        language. This presents a problem: for many users, tax and benefit questions directly affect their
-        lives and livelihoods, so they require correct, verifiable answers. Language models generate responses
-        from learned statistical patterns, and an answer may be partly or wholly wrong.
+        benefit policy and reform because these models can read loosely worded questions and answer them in
+        plain language. This presents a problem: for many users, tax and benefit questions directly affect
+        their lives and livelihoods, so they require correct, verifiable answers. Language models generate
+        responses from learned statistical patterns, and an answer may be partly or wholly wrong.
       </p>
       <p>
         PolicyEngine therefore built UK Chat, an AI interface to PolicyEngine&apos;s deterministic rules and
         simulation engine. A language model interprets an open-ended request and proposes a structured plan.
         The gateway checks the proposed inputs and output against the current PolicyEngine catalogue; only
         then do deterministic tools compute quantitative policy results from actual tax and benefit rules.
+      </p>
+      <p>
+        UK Chat is released as a <strong>beta</strong>. The pipeline described here is in place and running,
+        but the range of reforms it covers, the wording of its answers, and its judgement about what it cannot
+        compute are all still being tested. We are publishing it at this stage to gather feedback on where it
+        is useful and where it falls short, beginning with PolicyEngine&apos;s own policy team.
+      </p>
+    </FadeIn>
+  );
+}
+
+function TodayWorkflow() {
+  return (
+    <FadeIn>
+      <h2>How policy analysis is done today</h2>
+      <p>
+        PolicyEngine already answers questions of this kind, but not in conversation. A researcher costing a
+        Child Benefit change writes Python against the PolicyEngine UK model or calls the API: find the
+        parameter path in the catalogue, build a reform object by hand, run baseline and reform over the same
+        survey microdata, then read off the budgetary or distributional measure. The loop runs in a notebook,
+        and a first pass usually takes several iterations to settle the path, the date, and the output.
+      </p>
+      <p>
+        That workflow is precise and fully inspectable, and it is what UK Chat calls underneath. It also asks
+        a great deal of the person using it: familiarity with Python, with the parameter catalogue, and with
+        which output belongs to which question. For a policy analyst, a journalist, or a household working out
+        what a reform would mean for them, the barrier is the setup rather than the arithmetic.
+      </p>
+      <p>
+        Prompting a general-purpose language model looks like the way around that barrier, and it is where
+        many people now start. The rest of this article is about why that shortcut does not produce a figure
+        anyone can rely on, and what UK Chat puts in its place. UK Chat does not replace the Python workflow —
+        custom variables, bespoke datasets, and reproducible scripts still belong in code — but for the
+        questions the typed tools already cover, it removes the setup and leaves the calculation where it was.
       </p>
     </FadeIn>
   );
@@ -418,7 +691,7 @@ function BoundaryDiagram() {
       className="agent-flow-svg boundary-flow-svg"
       viewBox="0 0 900 300"
       role="img"
-      aria-label="The boundary between the predictive AI layer and the deterministic PolicyEngine engine: the language model interprets the question and calls typed tools; the engine validates, simulates, and computes; the language model then explains the returned numbers."
+      aria-label="The boundary between the predictive AI layer and the deterministic engine: the language model interprets the question and calls typed tools; the engine validates, simulates, and computes; the language model then explains the returned numbers."
     >
       <defs>
         {/* A slightly concave, offset head reads as an arrow rather than a
@@ -629,7 +902,7 @@ function Boundary() {
       </p>
       <p>
         The gateway sits on that line. It takes the plan the language model proposes and decides whether it
-        may cross into the deterministic side, which is why the system has three parts rather than two: the
+        may cross into the deterministic side. That is why the system has three parts rather than two: the
         language model, the gateway, and the tools a plan reaches once the gateway admits it.
       </p>
     </FadeIn>
@@ -733,7 +1006,8 @@ function ToolExplorer() {
     <FadeIn>
       <h2>The language model proposes a plan</h2>
       <p>
-        UK Chat breaks the user pathway into three segments: the AI model, the gateway, and supporting tools.
+        UK Chat breaks the user pathway into three segments: the language model, the gateway, and supporting
+        tools.
       </p>
       <p>
         First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
@@ -1015,12 +1289,39 @@ function ArchitectureScrolly() {
   );
 }
 
+const traceItems = traceSteps.map((step) => ({ key: step.id, step }));
+
+function CallTrace() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  return (
+    <CardTabs
+      idPrefix="call-trace"
+      label="Tool-call trace"
+      meta={`${traceSteps.length} calls · one turn`}
+      items={traceItems}
+      activeIndex={activeIndex}
+      onSelect={(item, index) => setActiveIndex(index)}
+      cardsClassName="tool-cards trace-cards"
+      renderCard={(item, index) => (
+        <>
+          <span className="iteration-num">{index + 1}</span>
+          <span className="iteration-title">{item.step.stage}</span>
+          <span className="iteration-subtitle">{item.step.family}</span>
+        </>
+      )}
+    >
+      <div className="call-trace">{traceSteps[activeIndex].body}</div>
+    </CardTabs>
+  );
+}
+
 function WorkedExample() {
   const phases = [
     {
       number: 1,
       title: 'Ground',
-      segment: 'AI model',
+      segment: 'Language model',
       agents: ['£30 a week', '2026', 'budgetary impact'],
       description:
         'Extract the requested value, policy year, and output from the user’s exact words, while keeping the proposed plan separate from verified facts.',
@@ -1105,6 +1406,24 @@ function WorkedExample() {
           ))}
         </div>
       </div>
+      <p>
+        Those stages describe what the system decides. Underneath, the turn is a short sequence of typed
+        calls, each one taking an argument that an earlier call produced. This is that sequence for the
+        request above.
+      </p>
+      <CallTrace />
+      <p>
+        Two features of the sequence carry most of the design. The first is that{' '}
+        <code>run_society_simulation</code> hands back a handle rather than data: the language model receives
+        a <code>simulation_id</code>, a dataset name, and a year, and never receives household rows, survey
+        weights, or any serialisable simulation object. Weighting happens inside the PolicyEngine UK model,
+        and the seven analysis tools are the only route from a stored simulation to a number.
+      </p>
+      <p>
+        The second is provenance. Every parameter path, value, and handle in the sequence was either supplied
+        by the user or produced by a preceding call, so each argument can be traced to its source. Nothing in
+        it was recalled.
+      </p>
       <section className="worked-result" aria-labelledby="worked-result-title">
         <div className="worked-result-heading">
           <div>
@@ -1168,7 +1487,7 @@ function WhatYouCanAsk() {
       <h2>What you can ask</h2>
       <p>
         The Child Benefit reform above is one of four kinds of questions supported today, and users can stack
-        these questions together within one conversation without starting a new chat.
+        these questions within one conversation without starting a new chat.
       </p>
       <CardTabs
         idPrefix="question-kind"
@@ -1212,6 +1531,11 @@ function Limitations() {
     <FadeIn>
       <h2>Limitations</h2>
       <p>
+        Some of what follows is a deliberate boundary that will not change. The rest is the current state of a
+        beta: reform coverage is incomplete, answers vary in how fully they state their assumptions, and
+        gateway behaviour will move as we act on what users report.
+      </p>
+      <p>
         The chat is a <strong>modelling tool, not advice</strong>. It reports what the engine calculates under
         stated assumptions, and it is not a substitute for professional guidance on an individual&apos;s
         circumstances.
@@ -1248,6 +1572,13 @@ function NextStepsAndTryIt() {
         that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset,
         comparator, and method alongside the answer.
       </p>
+      <p>
+        Because this is a beta, the cases where it fails are more useful to us than the cases where it works:
+        a request refused that the tools should support, an answer that omits an assumption it should state,
+        or a figure that does not match what the engine returns for the same reform. PolicyEngine&apos;s
+        policy team is working through the same exercise, and what they and other early users report will
+        decide what we change first.
+      </p>
       <a className="article-cta" href="https://policyengine.org/uk/chat" target="_blank" rel="noreferrer">
         Try PolicyEngine UK Chat
       </a>
@@ -1281,6 +1612,7 @@ export default function App() {
         <article className="article-wrapper">
           <Hero />
           <Introduction />
+          <TodayWorkflow />
           <Problem />
           <Boundary />
           <ToolExplorer />

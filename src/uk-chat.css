@@ -6,6 +6,23 @@
   font-size: 18px;
 }
 
+/* A release marker above the title. It sits outside .subtitle deliberately: the
+   subtitle wording is fixed, so the beta status is flagged around it. */
+.hero-beta {
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  border-radius: 999px;
+  color: var(--accent);
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-bottom: 18px;
+  padding: 5px 13px;
+  text-transform: uppercase;
+}
+
 .site-header,
 .site-header * {
   -webkit-font-smoothing: antialiased;
@@ -270,6 +287,29 @@
   font-size: 0.76rem;
   overflow-wrap: anywhere;
   padding: 7px 9px;
+}
+
+/* Five calls, one row, following .question-cards. Like that rule this has to
+   stay above the breakpoints below, or the 2- and 1-column fallbacks lose. */
+.trace-cards {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.trace-cards .iteration-card {
+  min-height: 152px;
+}
+
+.trace-cards .iteration-num {
+  margin: 0 auto 12px;
+}
+
+.trace-cards .iteration-title,
+.trace-cards .iteration-subtitle {
+  display: block;
+}
+
+.trace-cards .iteration-title {
+  margin-bottom: 6px;
 }
 
 .timeline-phases {
@@ -675,4 +715,28 @@
 .boundary-flow-container {
   padding-left: 20px;
   padding-right: 20px;
+}
+
+/* The tool-call trace reuses the legacy .example-* vocabulary, which was
+   written for the sticky panel of the older article. Two things differ here:
+   the calls are <pre> so the line breaks survive, and .example-section's 2px
+   gap is too tight once the blocks sit inside body-width prose. */
+.call-trace pre.example-code {
+  margin: 0;
+}
+
+.call-trace .example-section + .example-section {
+  margin-top: 18px;
+}
+
+.call-trace .example-file {
+  margin-bottom: 0;
+}
+
+/* The generated JSON keys and elided values run past the panel on a phone;
+   the code block scrolls rather than the page. */
+@media (max-width: 600px) {
+  .call-trace pre.example-code {
+    font-size: 0.72rem;
+  }
 }
