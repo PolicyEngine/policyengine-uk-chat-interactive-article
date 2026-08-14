@@ -274,7 +274,7 @@ a:hover {
   align-self: flex-start;
 }
 .narrative-step {
-  min-height: 90vh;
+  min-height: 58vh;
   padding: 40px 20px 40px 24px;
   opacity: 1;
   border-left: 3px solid transparent;

@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import SiteHeader from './SiteHeader';
 import anthonyVolkHeadshot from './assets/authors/anthony-volk.webp';
 import vahidAhmadiHeadshot from './assets/authors/vahid-ahmadi.webp';
+import ukChatScreenshot from './assets/uk-chat-screenshot.jpg';
 
 const toolFamilies = [
   {
@@ -622,9 +623,8 @@ const requestSteps = [
       </>
     ),
     example: {
-      callTitle: 'the user’s message',
-      call: `last_user_message="For 2026, set the Child Benefit eldest-child rate
-  to £30 a week and show the annual budgetary impact"`,
+      callTitle: 'the user’s message, as the gateway receives it',
+      call: `last_user_message="…the request above, with no conversation history…"`,
       returnsTitle: 'proposed plan',
       returns: `{ "domain_status": "uk_or_unspecified", "capability_status": "supported",
   "tool": "compute_budgetary_impact",
@@ -905,8 +905,20 @@ function Introduction() {
         UK Chat is released as a <strong>beta</strong>. The pipeline described here is in place and running,
         but the range of reforms it covers, the wording of its answers, and its judgement about what it cannot
         compute are all still being tested. We are publishing it at this stage to gather feedback on where it
-        is useful and where it falls short, beginning with PolicyEngine&apos;s own policy team.
+        is useful and where it falls short.
       </p>
+      <a
+        className="product-shot"
+        href="https://policyengine.org/uk/chat"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Open PolicyEngine UK Chat"
+      >
+        <img
+          src={ukChatScreenshot}
+          alt="PolicyEngine UK Chat, showing the question box and suggested questions"
+        />
+      </a>
       <ChatCta />
     </FadeIn>
   );
@@ -1299,22 +1311,6 @@ function ToolExplorer() {
 
   return (
     <FadeIn>
-      <h2>The language model proposes a plan</h2>
-      <p>
-        UK Chat breaks the user pathway into three segments: the language model, the gateway, and supporting
-        tools.
-      </p>
-      <p>
-        First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
-        develops a simulation or analysis plan. The plan has a required format and must use one or more of the
-        deterministic tools connected to the PolicyEngine UK tax and benefit simulation engine.
-      </p>
-      <p>
-        Next, UK Chat&apos;s gateway verifies and sometimes constrains that plan to ensure PolicyEngine
-        provides the tools required to answer the question. The gateway may also ask the user for
-        clarification before finalising a plan.
-      </p>
-
       <h2>Tools make the calculation deterministic</h2>
       <p>
         At this point, UK Chat has a gateway-verified plan, and every figure in the answer comes from the
@@ -1538,11 +1534,20 @@ function ArchitectureScrolly() {
     <FadeIn>
       <h2>Under the hood</h2>
       <p>
-        Here&apos;s what happens inside a single request. UK Chat&apos;s core runtime is a FastAPI
-        server-sent-events handler that calls the Anthropic SDK directly. There is no generic agent framework
-        in the request path. The chat owns both the opening gateway and the tool loop, so the rules that
-        matter can be enforced at the point where each decision is made. Each stage below is tagged with the
-        segment that owns it.
+        Take one request:{' '}
+        <em>
+          “For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary
+          impact.”
+        </em>{' '}
+        It names a policy, a value, a year, and an output. It does not name a PolicyEngine parameter path, a
+        reform object, or the sequence of tools needed to answer it. This section and the next follow that
+        request through the system.
+      </p>
+      <p>
+        UK Chat&apos;s core runtime is a FastAPI server-sent-events handler that calls the Anthropic SDK
+        directly. There is no generic agent framework in the request path. The chat owns both the opening
+        gateway and the tool loop, so the rules that matter can be enforced at the point where each decision
+        is made. Each stage below is tagged with the segment that owns it.
       </p>
       <div className="scrollytelling-container">
         <div className="scrolly-narrative">
@@ -1626,28 +1631,11 @@ function WorkedExample() {
     <FadeIn>
       <h2>The same reform, call by call</h2>
       <p>
-        Consider: “For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual
-        budgetary impact.” The request contains a policy, a final value, a year, and an output. It does not
-        contain a PolicyEngine parameter path, a reform object, or the sequence of tools needed to answer it.
-      </p>
-      <p>
-        The six stages above decide what the system does; underneath, the turn is a short sequence of typed
-        calls, each one taking an argument that an earlier call produced. This is that sequence for the
-        request.
+        The six stages decide what the system does. Underneath, the approved plan is a short sequence of typed
+        calls, each taking an argument an earlier call produced. The loop re-derives what the gateway already
+        approved, and the match between the two is itself the check.
       </p>
       <CallTrace />
-      <p>
-        Two features of the sequence carry most of the design. The first is that{' '}
-        <code>run_society_simulation</code> hands back a handle rather than data: the language model receives
-        a <code>result_id</code>, a dataset reference, and a year, and never receives household rows, survey
-        weights, or any serialisable simulation object. Weighting happens inside the PolicyEngine UK model,
-        and the seven analysis tools are the only route from a stored simulation to a number.
-      </p>
-      <p>
-        The second is provenance. Every parameter path, value, and handle in the sequence was either supplied
-        by the user or produced by a preceding call, so each argument can be traced to its source. Nothing in
-        it was recalled.
-      </p>
       <section className="worked-result" aria-labelledby="worked-result-title">
         <div className="worked-result-heading">
           <div>
@@ -1693,9 +1681,9 @@ function WorkedExample() {
         </p>
       </section>
       <p>
-        If the catalogue returned more than one materially plausible interpretation, or the reform resolver
-        could not determine what year or reform the user was requesting, the calculation would pause before
-        the tool loop and ask the user to confirm the intended construction.
+        The seven analysis tools are the only route from a stored simulation to that number, and every
+        parameter path, value, and handle in the sequence was either supplied by the user or produced by a
+        preceding call. Nothing in it was recalled.
       </p>
     </FadeIn>
   );
@@ -1757,7 +1745,8 @@ function Limitations() {
       <p>
         Some of what follows is a deliberate boundary that will not change. The rest is the current state of a
         beta: reform coverage is incomplete, answers vary in how fully they state their assumptions, and
-        gateway behaviour will move as we act on what users report.
+        gateway behaviour will move as we act on what users report. Widening the range of reforms the typed
+        tools cover, and the evidence the gateway can resolve before calculation, is where the work goes next.
       </p>
       <p>
         The chat is a <strong>modelling tool, not advice</strong>. It reports what the engine calculates under
@@ -1783,18 +1772,12 @@ function Limitations() {
 function NextStepsAndTryIt() {
   return (
     <FadeIn>
-      <h2>What&apos;s next</h2>
-      <p>
-        We want to widen the range of reforms covered by typed tools, improve the speed and inspectability of
-        more specialised analyses, and keep expanding the evidence the gateway can resolve before calculation.
-        UK Chat also works alongside PolicyEngine&apos;s wider generative AI integrations and plugin ecosystem
-        for researchers building their own analyses.
-      </p>
       <h2>Try it yourself</h2>
       <p>
         UK Chat&apos;s answers can be cited and reproduced because the figures come from the same open engine
-        that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset,
-        comparator, and method alongside the answer.
+        that powers the rest of PolicyEngine, and it sits alongside PolicyEngine&apos;s wider generative AI
+        integrations and plugin ecosystem for researchers building their own analyses. Try it with a reform,
+        then inspect the stated year, dataset, comparator, and method alongside the answer.
       </p>
       <p>
         Because this is a beta, the cases where it fails are more useful to us than the cases where it works:

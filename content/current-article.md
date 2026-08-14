@@ -8,7 +8,7 @@ People are increasingly turning to AI language models to answer complex question
 
 PolicyEngine therefore built UK Chat, an AI interface to PolicyEngine's deterministic rules and simulation engine. A language model interprets an open-ended request and proposes a structured plan. The gateway checks the proposed inputs and output against the current PolicyEngine catalogue; only then do deterministic tools compute quantitative policy results from actual tax and benefit rules.
 
-UK Chat is released as a **beta**. The pipeline described here is in place and running, but the range of reforms it covers, the wording of its answers, and its judgement about what it cannot compute are all still being tested. We are publishing it at this stage to gather feedback on where it is useful and where it falls short, beginning with PolicyEngine's own policy team.
+UK Chat is released as a **beta**. The pipeline described here is in place and running, but the range of reforms it covers, the wording of its answers, and its judgement about what it cannot compute are all still being tested. We are publishing it at this stage to gather feedback on where it is useful and where it falls short.
 
 [Try PolicyEngine UK Chat (beta)](https://policyengine.org/uk/chat)
 
@@ -39,14 +39,6 @@ The deterministic parts are the ones users need to be able to check: validating 
 When a question is ready for computation, the language model receives the calculation tools, but not a list of what exists in the model. It has to ask: names are confirmed by calling discovery tools against the deployed package, so a policy the model half-remembers either resolves to a real parameter path or fails to resolve at all. The gateway works the same way from the other side, describing the tools from their own schemas so its vocabulary cannot drift from what the tools actually accept.
 
 The gateway sits on that line. It takes the plan the language model proposes and decides whether it may cross into the deterministic side. That is why the system has three parts rather than two: the language model, the gateway, and the tools a plan reaches once the gateway admits it.
-
-## The language model proposes a plan
-
-UK Chat breaks the user pathway into three segments: the language model, the gateway, and supporting tools.
-
-First, the language model does the predictive work. It takes the user's open-ended prompt and develops a simulation or analysis plan. The plan has a required format and must use one or more of the deterministic tools connected to the PolicyEngine UK tax and benefit simulation engine.
-
-Next, UK Chat's gateway verifies and sometimes constrains that plan to ensure PolicyEngine provides the tools required to answer the question. The gateway may also ask the user for clarification before finalising a plan.
 
 ## Tools make the calculation deterministic
 
@@ -373,7 +365,9 @@ generate_chart(
 
 ## Under the hood
 
-Here's what happens inside a single request. UK Chat's core runtime is a FastAPI server-sent-events handler that calls the Anthropic SDK directly. There is no generic agent framework in the request path. The chat owns both the opening gateway and the tool loop, so the rules that matter can be enforced at the point where each decision is made. Each stage below is tagged with the segment that owns it.
+Take one request: _"For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary impact."_ It names a policy, a value, a year, and an output. It does not name a PolicyEngine parameter path, a reform object, or the sequence of tools needed to answer it. This section and the next follow that request through the system.
+
+UK Chat's core runtime is a FastAPI server-sent-events handler that calls the Anthropic SDK directly. There is no generic agent framework in the request path. The chat owns both the opening gateway and the tool loop, so the rules that matter can be enforced at the point where each decision is made. Each stage below is tagged with the segment that owns it.
 
 ### 1. Ground — A structured opening plan
 
@@ -384,8 +378,7 @@ A fast language model reads the user's words and proposes a structured descripti
 _The user's message_
 
 ```
-last_user_message="For 2026, set the Child Benefit eldest-child rate
-  to £30 a week and show the annual budgetary impact"
+last_user_message="…the request above, with no conversation history…"
 ```
 
 _Proposed plan_
@@ -528,9 +521,7 @@ data: { "type": "done", "content": …, "stop_reason": …, "usage": { … } }
 
 ## The same reform, call by call
 
-Consider: “For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary impact.” The request contains a policy, a final value, a year, and an output. It does not contain a PolicyEngine parameter path, a reform object, or the sequence of tools needed to answer it.
-
-The six stages above decide what the system does; underneath, the turn is a short sequence of typed calls, each one taking an argument that an earlier call produced. This is that sequence for the request.
+The six stages decide what the system does. Underneath, the approved plan is a short sequence of typed calls, each taking an argument an earlier call produced. The loop re-derives what the gateway already approved, and the match between the two is itself the check.
 
 ### Tool-call trace — 5 calls, one turn
 
@@ -626,10 +617,6 @@ Computed inside the engine:
 - ✓ survey weights applied inside the PolicyEngine UK model
 - Stored: `result_id` → typed handle, turn-local.
 
-Two features of the sequence carry most of the design. The first is that `run_society_simulation` hands back a handle rather than data: the language model receives a `result_id`, a dataset reference, and a year, and never receives household rows, survey weights, or any serialisable simulation object. Weighting happens inside the PolicyEngine UK model, and the seven analysis tools are the only route from a stored simulation to a number.
-
-The second is provenance. Every parameter path, value, and handle in the sequence was either supplied by the user or produced by a preceding call, so each argument can be traced to its source. Nothing in it was recalled.
-
 ### Computed result: About £0.9 billion a year in additional government cost
 
 A production run compares the reform with 2026 current law using PolicyEngine's Enhanced Family Resources Survey dataset for 2024–25, release 1.56.13. It is a direct static microsimulation estimate. Tax revenue rises because a higher Child Benefit rate increases the High Income Child Benefit Charge paid by higher-income families.
@@ -641,8 +628,6 @@ A production run compares the reform with 2026 current law using PolicyEngine's 
 | Net budgetary impact | −£0.9 billion |
 
 A negative net budgetary impact means a cost to government. Figures are rounded to the nearest £0.1 billion.
-
-If the catalogue returned more than one materially plausible interpretation, or the reform resolver could not determine what year or reform the user was requesting, the calculation would pause before the tool loop and ask the user to confirm the intended construction.
 
 ## What you can ask
 
@@ -680,7 +665,7 @@ Follow-ups stay in the same thread. The conversation carries the context; the si
 
 ## Limitations
 
-Some of what follows is a deliberate boundary that will not change. The rest is the current state of a beta: reform coverage is incomplete, answers vary in how fully they state their assumptions, and gateway behaviour will move as we act on what users report.
+Some of what follows is a deliberate boundary that will not change. The rest is the current state of a beta: reform coverage is incomplete, answers vary in how fully they state their assumptions, and gateway behaviour will move as we act on what users report. Widening the range of reforms the typed tools cover, and the evidence the gateway can resolve before calculation, is where the work goes next.
 
 The chat is a modelling tool, not advice. It reports what the engine calculates under stated assumptions, and it is not a substitute for professional guidance on an individual's circumstances.
 
@@ -688,13 +673,9 @@ Society results are direct static microsimulation estimates. They do not estimat
 
 Results depend on the dataset, year, and modelling assumptions, and the chat states these dependencies rather than presenting figures as universal. They should still be checked against independent estimates from organisations such as the Institute for Fiscal Studies, Resolution Foundation, or Office for Budget Responsibility.
 
-## What's next
-
-We want to widen the range of reforms covered by typed tools, improve the speed and inspectability of more specialised analyses, and keep expanding the evidence the gateway can resolve before calculation. UK Chat also works alongside PolicyEngine's wider generative AI integrations and plugin ecosystem for researchers building their own analyses.
-
 ## Try it yourself
 
-UK Chat's answers can be cited and reproduced because the figures come from the same open engine that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset, comparator, and method alongside the answer.
+UK Chat's answers can be cited and reproduced because the figures come from the same open engine that powers the rest of PolicyEngine, and it sits alongside PolicyEngine's wider generative AI integrations and plugin ecosystem for researchers building their own analyses. Try it with a reform, then inspect the stated year, dataset, comparator, and method alongside the answer.
 
 Because this is a beta, the cases where it fails are more useful to us than the cases where it works: a request refused that the tools should support, an answer that omits an assumption it should state, or a figure that does not match what the engine returns for the same reform. PolicyEngine's policy team is working through the same exercise, and what they and other early users report will decide what we change first.
 
