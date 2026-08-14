@@ -588,9 +588,9 @@ function FadeIn({ children, delay = 0, className }) {
 function Hero() {
   return (
     <FadeIn>
-      <span className="hero-beta">Beta</span>
       <h1>PolicyEngine UK Chat: an AI interface for tax and benefits</h1>
       <p className="subtitle">
+        <span className="hero-beta">Beta</span>
         Introducing PolicyEngine&apos;s newest AI-powered tool to help users understand UK tax and benefit
         policy
       </p>
@@ -620,6 +620,7 @@ function Introduction() {
         compute are all still being tested. We are publishing it at this stage to gather feedback on where it
         is useful and where it falls short, beginning with PolicyEngine&apos;s own policy team.
       </p>
+      <ChatCta />
     </FadeIn>
   );
 }
@@ -1591,10 +1592,19 @@ function NextStepsAndTryIt() {
         policy team is working through the same exercise, and what they and other early users report will
         decide what we change first.
       </p>
+      <ChatCta />
+    </FadeIn>
+  );
+}
+
+function ChatCta() {
+  return (
+    <div className="article-cta-wrap">
       <a className="article-cta" href="https://policyengine.org/uk/chat" target="_blank" rel="noreferrer">
         Try PolicyEngine UK Chat
+        <span className="article-cta-beta">Beta</span>
       </a>
-    </FadeIn>
+    </div>
   );
 }
 

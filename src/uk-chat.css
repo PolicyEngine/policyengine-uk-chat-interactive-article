@@ -8,6 +8,8 @@
 
 /* A release marker above the title. It sits outside .subtitle deliberately: the
    subtitle wording is fixed, so the beta status is flagged around it. */
+/* Sits inline at the head of the subtitle, so the status reads as part of the
+   standfirst rather than as a separate line above the title. */
 .hero-beta {
   background: var(--accent-light);
   border: 1px solid var(--accent-mid);
@@ -15,12 +17,14 @@
   color: var(--accent);
   display: inline-block;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
+  font-size: 0.62em;
+  font-style: normal;
   font-weight: 700;
   letter-spacing: 0.14em;
-  margin-bottom: 18px;
-  padding: 5px 13px;
+  margin-right: 12px;
+  padding: 4px 12px;
   text-transform: uppercase;
+  vertical-align: 0.14em;
 }
 
 .site-header,
@@ -480,6 +484,31 @@
   color: var(--text-light);
   font-size: 0.9rem;
   margin: 0;
+}
+
+/* Both placements centre the button and carry the beta marker, so the offer
+   reads the same in the introduction and at the end. */
+.article-cta-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 26px 0 8px;
+}
+
+.article-cta-beta {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-left: 10px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.article-cta:hover .article-cta-beta,
+.article-cta:focus-visible .article-cta-beta {
+  background: rgba(13, 115, 119, 0.12);
 }
 
 .article-cta {
