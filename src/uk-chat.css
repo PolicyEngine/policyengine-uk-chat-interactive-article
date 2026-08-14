@@ -424,6 +424,23 @@
   margin: 26px 0 8px;
 }
 
+.article-cta-beta {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-left: 10px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.article-cta:hover .article-cta-beta,
+.article-cta:focus-visible .article-cta-beta {
+  background: rgba(13, 115, 119, 0.12);
+}
+
 .article-cta {
   align-items: center;
   background: var(--accent);

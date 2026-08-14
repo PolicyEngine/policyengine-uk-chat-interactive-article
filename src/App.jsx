@@ -1813,6 +1813,7 @@ function ChatCta() {
     <div className="article-cta-wrap">
       <a className="article-cta" href="https://policyengine.org/uk/chat" target="_blank" rel="noreferrer">
         Try PolicyEngine UK Chat
+        <span className="article-cta-beta">Beta</span>
       </a>
     </div>
   );

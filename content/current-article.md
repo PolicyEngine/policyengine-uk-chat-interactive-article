@@ -10,7 +10,7 @@ PolicyEngine therefore built UK Chat, an AI interface to PolicyEngine's determin
 
 UK Chat is released as a **beta**. The pipeline described here is in place and running, but the range of reforms it covers, the wording of its answers, and its judgement about what it cannot compute are all still being tested. We are publishing it at this stage to gather feedback on where it is useful and where it falls short, beginning with PolicyEngine's own policy team.
 
-[Try PolicyEngine UK Chat](https://policyengine.org/uk/chat)
+[Try PolicyEngine UK Chat (beta)](https://policyengine.org/uk/chat)
 
 ## How policy analysis is done today
 
@@ -698,4 +698,4 @@ UK Chat's answers can be cited and reproduced because the figures come from the 
 
 Because this is a beta, the cases where it fails are more useful to us than the cases where it works: a request refused that the tools should support, an answer that omits an assumption it should state, or a figure that does not match what the engine returns for the same reform. PolicyEngine's policy team is working through the same exercise, and what they and other early users report will decide what we change first.
 
-[Try PolicyEngine UK Chat](https://policyengine.org/uk/chat)
+[Try PolicyEngine UK Chat (beta)](https://policyengine.org/uk/chat)
