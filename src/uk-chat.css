@@ -1,9 +1,29 @@
 .article-wrapper p,
 .article-wrapper li,
 .article-wrapper .subtitle,
-.article-wrapper .step-title,
-.article-wrapper .workflow-command {
+.article-wrapper .step-title {
   font-size: 18px;
+}
+
+/* A release marker above the title. It sits outside .subtitle deliberately: the
+   subtitle wording is fixed, so the beta status is flagged around it. */
+/* Sits inline at the head of the subtitle, so the status reads as part of the
+   standfirst rather than as a separate line above the title. */
+.hero-beta {
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  border-radius: 999px;
+  color: var(--accent);
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62em;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-right: 12px;
+  padding: 4px 12px;
+  text-transform: uppercase;
+  vertical-align: 0.14em;
 }
 
 .site-header,
@@ -117,10 +137,6 @@
 
 .tool-summary p {
   margin: 0;
-}
-
-.timeline-agent {
-  overflow-wrap: anywhere;
 }
 
 .gateway-outcomes {
@@ -272,69 +288,27 @@
   padding: 7px 9px;
 }
 
-.timeline-phases {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+/* Five calls, one row, following .question-cards. Like that rule this has to
+   stay above the breakpoints below, or the 2- and 1-column fallbacks lose. */
+.trace-cards {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-/* The legacy connector is a single absolutely-positioned line across the whole
-   grid, which only ever covers the first row. With six stages on three columns
-   that leaves rows 2 (stages 4-6) unconnected, so draw the connector per stage
-   instead: each one reaches from its own number to the next column's. */
-.timeline-phases::before {
-  display: none;
+.trace-cards .iteration-card {
+  min-height: 152px;
 }
 
-.timeline-phase::before {
-  background: var(--accent);
-  content: '';
-  height: 3px;
-  left: 50%;
-  position: absolute;
-  top: 25px;
-  width: calc(100% + 20px);
-  z-index: 0;
+.trace-cards .iteration-num {
+  margin: 0 auto 12px;
 }
 
-/* The last stage in a row runs on to the grid edge and the first stage of the
-   next row picks the line up from the left edge, so the connector reads as
-   wrapping onto the following row rather than stopping at stage 3. */
-.timeline-phase:nth-child(3n)::before {
-  width: 50%;
+.trace-cards .iteration-title,
+.trace-cards .iteration-subtitle {
+  display: block;
 }
 
-.timeline-phase:nth-child(3n + 1):not(:first-child)::after {
-  background: var(--accent);
-  content: '';
-  height: 3px;
-  left: 0;
-  position: absolute;
-  top: 25px;
-  width: 50%;
-  z-index: 0;
-}
-
-/* Source order matters: this has to beat the :nth-child(3n) width above so the
-   final stage terminates instead of trailing off the edge. */
-.timeline-phase:last-child::before {
-  display: none;
-}
-
-.timeline-phase-num {
-  position: relative;
-  z-index: 1;
-}
-
-.timeline-phase-card {
-  min-height: 300px;
-}
-
-.timeline-phase-segment {
-  color: var(--text-light);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.64rem;
-  letter-spacing: 0.05em;
-  margin-top: 2px;
-  text-transform: uppercase;
+.trace-cards .iteration-title {
+  margin-bottom: 6px;
 }
 
 .worked-result {
@@ -442,6 +416,31 @@
   margin: 0;
 }
 
+/* Both placements centre the button and carry the beta marker, so the offer
+   reads the same in the introduction and at the end. */
+.article-cta-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 26px 0 8px;
+}
+
+.article-cta-beta {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-left: 10px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.article-cta:hover .article-cta-beta,
+.article-cta:focus-visible .article-cta-beta {
+  background: rgba(13, 115, 119, 0.12);
+}
+
 .article-cta {
   align-items: center;
   background: var(--accent);
@@ -541,15 +540,6 @@
   .tool-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .timeline-phases {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .timeline-phase::before,
-  .timeline-phase::after {
-    display: none;
-  }
 }
 
 @media (max-width: 600px) {
@@ -571,10 +561,6 @@
 
   .family-panel-header {
     display: block;
-  }
-
-  .timeline-phases {
-    grid-template-columns: 1fr;
   }
 
   .worked-result {
@@ -632,19 +618,6 @@
   color: #fff;
 }
 
-/* The worked-example timeline advertises clickability it does not have. */
-.timeline-phase-header:hover {
-  transform: none;
-}
-
-.timeline-phase-header:hover .timeline-phase-num {
-  box-shadow: 0 4px 15px #0d73774d;
-}
-
-.timeline-phase-card:hover {
-  border-color: var(--border);
-}
-
 /* Anthony asked for the tool names in the question panel to be labelled, so
    they read as an illustration of what a question might call rather than as a
    fixed list. Own border/spacing instead of borrowing .tool-name-list's. */
@@ -675,4 +648,59 @@
 .boundary-flow-container {
   padding-left: 20px;
   padding-right: 20px;
+}
+
+/* The tool-call trace reuses the legacy .example-* vocabulary, which was
+   written for the sticky panel of the older article. Two things differ here:
+   the calls are <pre> so the line breaks survive, and .example-section's 2px
+   gap is too tight once the blocks sit inside body-width prose. */
+.call-trace pre.example-code {
+  margin: 0;
+}
+
+.call-trace .example-section + .example-section {
+  margin-top: 18px;
+}
+
+.call-trace .example-file {
+  margin-bottom: 0;
+}
+
+/* The tool cards and the stage narrative borrow the same vocabulary, at a
+   smaller size: only one example is on screen at a time, and neither panel may
+   grow taller than what sits above it. */
+.tool-example,
+.stage-example {
+  margin-top: 16px;
+}
+
+/* Call beside return while there is room, so the tool panel stays shorter than
+   the family cards above it; the narrative column is too narrow to split, so
+   its examples stack at any width. */
+.tool-example {
+  display: grid;
+  gap: 16px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.stage-example .example-section + .example-section {
+  margin-top: 12px;
+}
+
+.tool-example pre.example-code,
+.stage-example pre.example-code {
+  font-size: 0.74rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+/* The generated JSON keys and elided values run past the panel on a phone;
+   the code block scrolls rather than the page. */
+@media (max-width: 600px) {
+  .call-trace pre.example-code,
+  .tool-example pre.example-code,
+  .stage-example pre.example-code {
+    font-size: 0.72rem;
+  }
 }
