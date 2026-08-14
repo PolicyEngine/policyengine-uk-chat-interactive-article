@@ -349,7 +349,7 @@ const questionKinds = [
   },
 ];
 
-/* The five calls the Child Benefit request in "One reform, end to end" actually
+/* The five calls the Child Benefit request in "The same reform, call by call" actually
    makes, one per tool family bar Presentation. Identifiers are shortened and the
    current-law rate is elided, because both come from whichever PolicyEngine UK
    package is deployed rather than from anything fixed at publication. */
@@ -1624,7 +1624,7 @@ function CallTrace() {
 function WorkedExample() {
   return (
     <FadeIn>
-      <h2>One reform, end to end</h2>
+      <h2>The same reform, call by call</h2>
       <p>
         Consider: “For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual
         budgetary impact.” The request contains a policy, a final value, a year, and an output. It does not

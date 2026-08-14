@@ -526,7 +526,7 @@ data: { "type": "tool_use", "tool_name": "compute_budgetary_impact",
 data: { "type": "done", "content": …, "stop_reason": …, "usage": { … } }
 ```
 
-## One reform, end to end
+## The same reform, call by call
 
 Consider: “For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary impact.” The request contains a policy, a final value, a year, and an output. It does not contain a PolicyEngine parameter path, a reform object, or the sequence of tools needed to answer it.
 
