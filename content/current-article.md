@@ -36,7 +36,7 @@ The predictive parts are interpreting wording, deciding which kind of analysis i
 
 The deterministic parts are the ones users need to be able to check: validating the request, looking up parameters, constructing household inputs, running simulations, computing weighted outputs, and producing chart data. None of these depends on the language model's memory. The runtime enforces the boundary rather than asking the language model to respect it in a prompt.
 
-When a question is ready for computation, the language model receives the calculation tools plus a machine-readable description of what the deployed engine can compute: its capabilities and parameter schema. What the language model can be asked to compute is therefore tied to the deployed version of PolicyEngine, not to a hand-written prompt that drifts out of date.
+When a question is ready for computation, the language model receives the calculation tools, but not a list of what exists in the model. It has to ask: names are confirmed by calling discovery tools against the deployed package, so a policy the model half-remembers either resolves to a real parameter path or fails to resolve at all. The gateway works the same way from the other side, describing the tools from their own schemas so its vocabulary cannot drift from what the tools actually accept.
 
 The gateway sits on that line. It takes the plan the language model proposes and decides whether it may cross into the deterministic side. That is why the system has three parts rather than two: the language model, the gateway, and the tools a plan reaches once the gateway admits it.
 
@@ -80,7 +80,7 @@ Turn a society simulation into specific, weighted policy results. Dedicated deri
 
 ### Presentation (1 tool)
 
-Build a chart from a calculation result using a constrained chart schema. Charts are constructed from stored results, so the displayed artefact stays tied to the calculation.
+Build a chart from a calculation result using a constrained chart schema. Policy charts are built from a stored result, so the displayed artefact stays tied to the calculation it came from.
 
 `generate_chart`
 
@@ -108,6 +108,8 @@ _Gateway_
 
 The gateway applies fixed policy to the grounded, catalogue-backed plan and assigns one of five outcomes. Only a ready request may enter the calculation loop.
 
+The gate is deliberately biased towards computing. If the classifier errors or returns something the server cannot read, the request is treated as ready rather than refused, on the view that a wrong refusal costs more than a wrong attempt. The guarantees that follow come from the tools, not from the gate.
+
 - Ready: the request is complete and supported, so calculation can begin.
 - Needs plan: a required choice is missing, so the chat asks a clarifying question.
 - Partial: the request mixes supported and unsupported outputs, so the chat offers the supported part.
@@ -119,6 +121,8 @@ The gateway applies fixed policy to the grounded, catalogue-backed plan and assi
 _Gateway_
 
 A society-wide reform receives a second bounded check. The resolver searches the rules engine's current reform targets, binds the user's wording to an exact parameter path and date, and constructs reform JSON. The validator must accept that construction before a simulation can run.
+
+What the gateway approves is then the only reform that can run. The simulation tool compares the reform it is handed against the approved construction and refuses anything that does not match, so a different reform cannot be substituted after the check has passed.
 
 ### 5. Calculate — A bounded 21-tool runtime
 
@@ -289,7 +293,7 @@ Parametric reforms run across the modelled UK population: budgetary impact, prog
 
 > Show me that by decile.
 
-When a comparison reads better as a picture than as prose, the computed output is mapped onto a fixed chart preset. The chart is drawn from the same typed result as the text, so the two cannot disagree.
+When a comparison reads better as a picture than as prose, the computed output is mapped onto a fixed chart preset. A policy preset has to name the stored result it draws, so that chart and the text around it cannot disagree.
 
 `generate_chart`
 
@@ -305,7 +309,7 @@ Some of what follows is a deliberate boundary that will not change. The rest is 
 
 The chat is a modelling tool, not advice. It reports what the engine calculates under stated assumptions, and it is not a substitute for professional guidance on an individual's circumstances.
 
-Society results are direct static microsimulation estimates. They do not estimate behavioural responses, employment effects, inflation, GDP, market reactions, or general-equilibrium effects. When a request mixes a supported policy result with one of those effects, the gateway notifies the user that it cannot calculate these effects, then proceeds with what it can.
+Society results are direct static microsimulation estimates. They do not estimate behavioural responses, employment effects, inflation, GDP, market reactions, or general-equilibrium effects. When a request mixes a supported policy result with one of those effects, the gateway says which part it cannot calculate and asks whether to run the part it can, rather than running anything that turn.
 
 Results depend on the dataset, year, and modelling assumptions, and the chat states these dependencies rather than presenting figures as universal. They should still be checked against independent estimates from organisations such as the Institute for Fiscal Studies, Resolution Foundation, or Office for Budget Responsibility.
 

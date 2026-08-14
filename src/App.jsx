@@ -128,7 +128,7 @@ const toolFamilies = [
     name: 'Presentation',
     summary: 'Build a chart from a calculation result using a constrained chart schema.',
     purpose:
-      'Charts are constructed from stored results, so the displayed artefact stays tied to the calculation.',
+      'Policy charts are built from a stored result, so the displayed artefact stays tied to the calculation it came from.',
     tools: [
       {
         name: 'generate_chart',
@@ -164,7 +164,7 @@ const questionKinds = [
     summary: 'Computed outputs, drawn',
     question: 'Show me that by decile.',
     description:
-      'When a comparison reads better as a picture than as prose, the computed output is mapped onto a fixed chart preset. The chart is drawn from the same typed result as the text, so the two cannot disagree.',
+      'When a comparison reads better as a picture than as prose, the computed output is mapped onto a fixed chart preset. A policy preset has to name the stored result it draws, so that chart and the text around it cannot disagree.',
     tools: ['generate_chart'],
   },
   {
@@ -478,6 +478,12 @@ const requestSteps = [
           The gateway applies fixed policy to the grounded, catalogue-backed plan and assigns one of five
           outcomes. Only a <strong>ready</strong> request may enter the calculation loop.
         </p>
+        <p>
+          The gate is deliberately biased towards computing. If the classifier errors or returns something the
+          server cannot read, the request is treated as ready rather than refused, on the view that a wrong
+          refusal costs more than a wrong attempt. The guarantees that follow come from the tools, not from
+          the gate.
+        </p>
         <ul className="gateway-outcomes">
           <li>
             <strong>Ready:</strong> the request is complete and supported, so calculation can begin.
@@ -512,6 +518,11 @@ const requestSteps = [
           A society-wide reform receives a second bounded check. The resolver searches the rules engine&apos;s
           current reform targets, binds the user&apos;s wording to an exact parameter path and date, and
           constructs reform JSON. The validator must accept that construction before a simulation can run.
+        </p>
+        <p>
+          What the gateway approves is then the only reform that can run. The simulation tool compares the
+          reform it is handed against the approved construction and refuses anything that does not match, so a
+          different reform cannot be substituted after the check has passed.
         </p>
       </>
     ),
@@ -895,10 +906,11 @@ function Boundary() {
         <BoundaryDiagram />
       </div>
       <p>
-        When a question is ready for computation, the language model receives the calculation tools plus a
-        machine-readable description of what the deployed engine can compute: its capabilities and parameter
-        schema. What the language model can be asked to compute is therefore tied to the deployed version of
-        PolicyEngine, not to a hand-written prompt that drifts out of date.
+        When a question is ready for computation, the language model receives the calculation tools, but not a
+        list of what exists in the model. It has to ask: names are confirmed by calling discovery tools
+        against the deployed package, so a policy the model half-remembers either resolves to a real parameter
+        path or fails to resolve at all. The gateway works the same way from the other side, describing the
+        tools from their own schemas so its vocabulary cannot drift from what the tools actually accept.
       </p>
       <p>
         The gateway sits on that line. It takes the plan the language model proposes and decides whether it
@@ -1543,8 +1555,8 @@ function Limitations() {
       <p>
         Society results are direct static microsimulation estimates. They do not estimate behavioural
         responses, employment effects, inflation, GDP, market reactions, or general-equilibrium effects. When
-        a request mixes a supported policy result with one of those effects, the gateway notifies the user
-        that it cannot calculate these effects, then proceeds with what it can.
+        a request mixes a supported policy result with one of those effects, the gateway says which part it
+        cannot calculate and asks whether to run the part it can, rather than running anything that turn.
       </p>
       <p>
         Results depend on the dataset, year, and modelling assumptions, and the chat states these dependencies
