@@ -1447,6 +1447,46 @@ function ToolExplorer() {
 }
 
 function AnswerWalkthrough() {
+  const prefersReducedMotion = useReducedMotion();
+  const [activeStage, setActiveStage] = useState(0);
+  const stageRefs = useRef([]);
+  const stageRatios = useRef(new Map());
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+
+    const ratios = stageRatios.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const index = Number(entry.target.dataset.stage);
+          ratios.set(index, entry.isIntersecting ? entry.intersectionRatio : 0);
+        });
+
+        const mostVisible = [...ratios.entries()]
+          .filter(([, ratio]) => ratio > 0)
+          .sort(([, firstRatio], [, secondRatio]) => secondRatio - firstRatio)[0];
+
+        if (mostVisible) setActiveStage(mostVisible[0]);
+      },
+      { rootMargin: '-74px 0px -45% 0px', threshold: [0, 0.15, 0.4, 0.7] },
+    );
+
+    stageRefs.current.forEach((node) => node && observer.observe(node));
+    return () => {
+      observer.disconnect();
+      ratios.clear();
+    };
+  }, []);
+
+  const selectStage = (index) => {
+    setActiveStage(index);
+    stageRefs.current[index]?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'center',
+    });
+  };
+
   return (
     <FadeIn>
       <h2>See one answer being built</h2>
@@ -1457,10 +1497,26 @@ function AnswerWalkthrough() {
       </p>
       <p className="walkthrough-disclosure">
         This guided reconstruction uses the real stages, tools, assumptions, and result from the Child Benefit
-        example; it is not a live chat session. Use the arrow buttons in the bottom-right of the stage
-        selector panel to move through the interactive.
+        example; it is not a live chat session. Scroll to move through the six stages, or use the stage
+        selector and arrow buttons to move directly between them.
       </p>
-      <CompressedUkChatPreview />
+      <div className="answer-walkthrough-scrolly">
+        <div className="answer-walkthrough-sticky">
+          <CompressedUkChatPreview activeStage={activeStage} onStageChange={selectStage} />
+        </div>
+        <div className="answer-walkthrough-scroll-track" aria-hidden="true">
+          {requestSteps.map((step, index) => (
+            <div
+              className="answer-walkthrough-scroll-step"
+              data-stage={index}
+              key={step.number}
+              ref={(node) => {
+                stageRefs.current[index] = node;
+              }}
+            />
+          ))}
+        </div>
+      </div>
     </FadeIn>
   );
 }
@@ -1502,9 +1558,8 @@ function CalculationWorkingDisclosure() {
   );
 }
 
-function CompressedUkChatPreview() {
+function CompressedUkChatPreview({ activeStage, onStageChange }) {
   const prefersReducedMotion = useReducedMotion();
-  const [activeStage, setActiveStage] = useState(0);
   const [animationStarted, setAnimationStarted] = useState(false);
   const [animationPhase, setAnimationPhase] = useState('idle');
   const [typedRequest, setTypedRequest] = useState('');
@@ -1945,7 +2000,7 @@ compute_budgetary_impact`}</code>
                 <button
                   aria-current={activeStage === index ? 'step' : undefined}
                   className={`walkthrough-stage-map-button ${activeStage === index ? 'active' : ''}`}
-                  onClick={() => setActiveStage(index)}
+                  onClick={() => onStageChange(index)}
                   type="button"
                 >
                   <span className="walkthrough-stage-map-number">{step.number}</span>
@@ -1966,7 +2021,7 @@ compute_budgetary_impact`}</code>
             <button
               aria-label="Previous stage"
               disabled={activeStage === 0}
-              onClick={() => setActiveStage((current) => Math.max(0, current - 1))}
+              onClick={() => onStageChange(Math.max(0, activeStage - 1))}
               type="button"
             >
               <IconArrowLeft aria-hidden="true" />
@@ -1977,7 +2032,7 @@ compute_budgetary_impact`}</code>
             <button
               aria-label="Next stage"
               disabled={activeStage === requestSteps.length - 1}
-              onClick={() => setActiveStage((current) => Math.min(requestSteps.length - 1, current + 1))}
+              onClick={() => onStageChange(Math.min(requestSteps.length - 1, activeStage + 1))}
               type="button"
             >
               <IconArrowRight aria-hidden="true" />
