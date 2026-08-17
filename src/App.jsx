@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { IconArrowLeft, IconArrowRight, IconChevronDown } from '@tabler/icons-react';
 import SiteHeader from './SiteHeader';
 import anthonyVolkHeadshot from './assets/authors/anthony-volk.webp';
 import vahidAhmadiHeadshot from './assets/authors/vahid-ahmadi.webp';
@@ -349,13 +350,13 @@ const questionKinds = [
   },
 ];
 
-/* The five calls the Child Benefit request in "The same reform, call by call" actually
-   makes, one per tool family bar Presentation. Identifiers are shortened and the
-   current-law rate is elided, because both come from whichever PolicyEngine UK
-   package is deployed rather than from anything fixed at publication. */
-const traceSteps = [
+/* The five public calls made during the Calculate stage. Identifiers are shortened
+   and the current-law rate is elided, because both come from whichever PolicyEngine
+   UK package is deployed rather than from anything fixed at publication. */
+const calculationToolSteps = [
   {
     id: 'find-target',
+    toolName: 'list_reform_targets',
     stage: 'Find the target',
     family: 'Discovery',
     body: (
@@ -391,6 +392,7 @@ const traceSteps = [
   },
   {
     id: 'read-current-law',
+    toolName: 'get_parameter',
     stage: 'Read current law',
     family: 'Discovery',
     body: (
@@ -442,6 +444,7 @@ const traceSteps = [
   },
   {
     id: 'validate',
+    toolName: 'validate_reform',
     stage: 'Validate',
     family: 'Validation',
     body: (
@@ -490,6 +493,7 @@ const traceSteps = [
   },
   {
     id: 'simulate',
+    toolName: 'run_society_simulation',
     stage: 'Simulate',
     family: 'Simulation',
     body: (
@@ -549,6 +553,7 @@ const traceSteps = [
   },
   {
     id: 'compute',
+    toolName: 'compute_budgetary_impact',
     stage: 'Compute',
     family: 'Analysis',
     body: (
@@ -605,6 +610,70 @@ const authors = [
     headshot: anthonyVolkHeadshot,
   },
 ];
+
+const walkthroughUserRequest =
+  'For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual budgetary impact.';
+
+const groundProposedPlan = {
+  domain_status: 'uk_or_unspecified',
+  capability_status: 'supported',
+  tool: 'compute_budgetary_impact',
+  catalogue_queries: [
+    {
+      kind: 'reform_target',
+      query: 'eldest-child rate',
+    },
+  ],
+};
+
+const resolveCatalogueCall = `resolve_catalogue_queries([
+  { "kind": "reform_target", "query": "eldest-child rate" }
+])`;
+
+const resolveCatalogueMatch = {
+  identifier: 'gov.hmrc.child_benefit.amount.eldest',
+  match_type: 'strong_phrase',
+  score: 0.9,
+  authoritative: true,
+};
+
+const gateCall = `gate(
+  in_domain=true, tool="compute_budgetary_impact",
+  unmodellable_outputs=[]
+)`;
+
+const gateVerdict = {
+  outcome: 'ready',
+  gating_reasons: [],
+};
+
+const verifyReformCall = `emit_reform_assessment(
+  reform={ "gov.hmrc.child_benefit.amount.eldest": 30.0 },
+  confidence=95
+)`;
+
+const approvedReform = {
+  approved_reform: {
+    'gov.hmrc.child_benefit.amount.eldest': 30.0,
+  },
+  require_approved_reform: true,
+};
+
+const walkthroughAnswerSummary =
+  'Setting the Child Benefit eldest-child rate to £30 a week in 2026 would cost the government about £0.9 billion a year compared with current law. Benefit spending rises by about £1.1 billion, while tax revenue rises by about £0.2 billion because the higher rate also increases High Income Child Benefit Charge receipts.';
+
+const walkthroughAnswerMethod =
+  'This is a direct static microsimulation estimate using Enhanced FRS 2024–25, release 1.56.13.';
+
+const streamEventSequence = `tool_start   society simulation
+tool_use     year + approved reform
+tool_result  success + simulation result_id
+tool_start   budgetary impact
+tool_use     simulation_id
+tool_result  success + computed totals
+thinking_done
+chunk        assistant answer
+done         turn complete`;
 
 const requestSteps = [
   {
@@ -905,7 +974,7 @@ function Introduction() {
         UK Chat is released as a <strong>beta</strong>. The pipeline described here is in place and running,
         but the range of reforms it covers, the wording of its answers, and its judgement about what it cannot
         compute are all still being tested. We are publishing it at this stage to gather feedback on where it
-        is useful and where it falls short, beginning with PolicyEngine&apos;s own policy team.
+        is useful and where it falls short.
       </p>
       <ChatCta />
     </FadeIn>
@@ -917,19 +986,28 @@ function TodayWorkflow() {
     <FadeIn>
       <h2>How policy analysis is done today</h2>
       <p>
-        PolicyEngine already answers questions of this kind, but not in conversation. Someone costing a Child
-        Benefit change either builds the reform by hand in the web app, or writes code against the model: find
-        the parameter path, construct a reform, run baseline and reform over the same microdata, read off the
-        measure. Both routes are precise and fully inspectable, and both call the engine UK Chat calls
-        underneath. Both also ask the same thing of the person using them: knowing which parameter carries the
-        policy, how to express the change, and which output answers the question.
+        PolicyEngine already provides tools to answer tax and benefit questions, but not in conversational
+        format. For example, someone looking to determine the cost of a change to the Child Benefit can use
+        one of two PolicyEngine features to do so. They can build the reform by hand in the web app, setting
+        each parameter through the interface and reading the results off the charts it returns. Or they can
+        write code against the PolicyEngine country model: find the parameter path in the catalogue, construct
+        a reform object, run baseline and reform policies over the same survey microdata, then take the
+        budgetary or distributional measure from the output. Either way, a first pass usually takes several
+        attempts to settle the parameter, the date, and the measure.
       </p>
       <p>
-        For a policy analyst, a journalist, or a household working out what a reform would mean for them, the
-        barrier is the setup rather than the arithmetic — and prompting a general-purpose language model looks
-        like the way around it. The rest of this article is about why that shortcut does not produce a figure
-        anyone can rely on. UK Chat replaces neither route, but for the questions its tools already cover it
-        removes the setup and leaves the calculation where it was.
+        Both routes are precise and fully inspectable, and both call the same engine UK Chat calls underneath.
+        Both also ask the same thing of the person using them: knowing which parameter carries the policy, how
+        to express the change, and which output answers the question. For a policy analyst, a journalist, or a
+        household working out what a reform would mean for them, this setup is a real barrier.
+      </p>
+      <p>
+        To this user, prompting a general-purpose AI model may feel like a way around the barrier. However, as
+        this article covers later, this shortcut does not necessarily produce reliable figures, given the
+        current limitations of standard AI models. UK Chat overcomes this limitation by applying the strengths
+        of conversational models to the same engine that already powers the web app and country models,
+        reducing the setup friction mentioned earlier by providing a series of typed tools that ensure results
+        are still deterministically calculated and grounded in fact.
       </p>
     </FadeIn>
   );
@@ -966,14 +1044,13 @@ function Problem() {
         checked.
       </p>
       <p>
-        We have measured this directly. In{' '}
-        <a href="https://policyengine.org/us/research/introducing-policybench">PolicyBench</a>, an evaluation
+        We have measured this directly. In <a href="https://policybench.org">PolicyBench</a>, an evaluation
         built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits
-        from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. In
-        the launch results the top language model matched PolicyEngine exactly on <strong>80.3%</strong> of
-        its scored outputs. Computed amounts scored lowest: income tax before credits scored far below
-        eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions,
-        and credits in the correct order.
+        from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. As of
+        August 17, 2026, the top language model matches PolicyEngine exactly on <strong>88.7%</strong> of its
+        scored outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility
+        flags, because getting it right means sequencing income concepts, thresholds, exclusions, and credits
+        in the correct order.
       </p>
     </FadeIn>
   );
@@ -1172,7 +1249,8 @@ function Boundary() {
     <FadeIn>
       <h2>The boundary</h2>
       <p>
-        The central design decision is where the predictive layer stops and the deterministic layer starts.
+        UK Chat&apos;s central design decision is where the predictive layer stops and the deterministic layer
+        starts.
       </p>
       <p>
         The <strong>predictive</strong> parts are interpreting wording, deciding which kind of analysis is
@@ -1189,16 +1267,15 @@ function Boundary() {
         <BoundaryDiagram />
       </div>
       <p>
-        When a question is ready for computation, the language model receives the calculation tools, but not a
-        list of what exists in the model. It has to ask: names are confirmed by calling discovery tools
-        against the deployed package, so a policy the model half-remembers either resolves to a real parameter
-        path or fails to resolve at all. The gateway works the same way from the other side, describing the
-        tools from their own schemas so its vocabulary cannot drift from what the tools actually accept.
-      </p>
-      <p>
-        The gateway sits on that line. It takes the plan the language model proposes and decides whether it
-        may cross into the deterministic side. That is why the system has three parts rather than two: the
-        language model, the gateway, and the tools a plan reaches once the gateway admits it.
+        This boundary creates a three-part request path: the language model, the gateway, and supporting
+        tools. The language model turns the user&apos;s open-ended prompt into a structured simulation or
+        analysis plan. The gateway checks whether that plan is complete and supported, constraining it or
+        asking the user for clarification when necessary, before calculation begins. Once the plan can
+        proceed, the language model receives the calculation tools, but not a static catalogue of PolicyEngine
+        policies and parameters. It must use discovery tools to resolve the user&apos;s wording against the
+        deployed PolicyEngine package, so a policy name either maps to a current parameter path or remains
+        unresolved. The gateway likewise derives its description of each tool from that tool&apos;s schema,
+        keeping its checks aligned with the inputs those tools actually accept.
       </p>
     </FadeIn>
   );
@@ -1299,22 +1376,6 @@ function ToolExplorer() {
 
   return (
     <FadeIn>
-      <h2>The language model proposes a plan</h2>
-      <p>
-        UK Chat breaks the user pathway into three segments: the language model, the gateway, and supporting
-        tools.
-      </p>
-      <p>
-        First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
-        develops a simulation or analysis plan. The plan has a required format and must use one or more of the
-        deterministic tools connected to the PolicyEngine UK tax and benefit simulation engine.
-      </p>
-      <p>
-        Next, UK Chat&apos;s gateway verifies and sometimes constrains that plan to ensure PolicyEngine
-        provides the tools required to answer the question. The gateway may also ask the user for
-        clarification before finalising a plan.
-      </p>
-
       <h2>Tools make the calculation deterministic</h2>
       <p>
         At this point, UK Chat has a gateway-verified plan, and every figure in the answer comes from the
@@ -1378,141 +1439,20 @@ function ToolExplorer() {
   );
 }
 
-function RequestFlowDiagram({ activeStep }) {
-  return (
-    <svg
-      className="flow-diagram-svg request-flow-svg"
-      viewBox="0 0 480 590"
-      role="img"
-      aria-label="PolicyEngine UK Chat six-stage lifecycle: Ground, Resolve, Gate, Verify, Calculate, and Stream"
-    >
-      <defs>
-        <marker id="request-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0,0 L8,4 L0,8 Z" fill="#0d7377" />
-        </marker>
-      </defs>
-      {requestSteps.map((step, index) => {
-        const y = 18 + index * 92;
-        const active = activeStep === index;
-        return (
-          <g key={step.title}>
-            {index > 0 && (
-              <line
-                x1="198"
-                y1={y - 35}
-                x2="198"
-                y2={y - 8}
-                stroke="#0d7377"
-                strokeWidth="2"
-                markerEnd="url(#request-arrow)"
-              />
-            )}
-            <rect
-              x="58"
-              y={y}
-              width="280"
-              height="58"
-              rx="10"
-              fill={active ? '#0d7377' : '#ffffff'}
-              stroke="#0d7377"
-              strokeWidth={active ? 3 : 2}
-            />
-            <circle cx="90" cy={y + 29} r="16" fill={active ? '#ffffff' : '#0d7377'} />
-            <text
-              x="90"
-              y={y + 34}
-              textAnchor="middle"
-              fontFamily="JetBrains Mono, monospace"
-              fontSize="14"
-              fontWeight="700"
-              fill={active ? '#0d7377' : '#ffffff'}
-            >
-              {index + 1}
-            </text>
-            <text
-              x="124"
-              y={y + 25}
-              fontFamily="JetBrains Mono, monospace"
-              fontSize="16"
-              fontWeight="600"
-              fill={active ? '#ffffff' : '#1e3a3a'}
-            >
-              {step.title}
-            </text>
-            <text
-              x="124"
-              y={y + 45}
-              fontFamily="Source Serif 4, Georgia, serif"
-              fontSize="12.5"
-              fill={active ? '#e7f5f4' : '#4a6363'}
-            >
-              {step.segment}
-            </text>
-          </g>
-        );
-      })}
-
-      <path
-        d="M338 231 C346 231 348 231 354 231"
-        fill="none"
-        stroke="#0d7377"
-        strokeWidth="2"
-        markerEnd="url(#request-arrow)"
-      />
-      <rect x="360" y="205" width="116" height="52" rx="9" fill="#e7f5f4" stroke="#0d7377" />
-      <text
-        x="418"
-        y="226"
-        textAnchor="middle"
-        fontFamily="JetBrains Mono, monospace"
-        fontSize="11"
-        fill="#0d7377"
-      >
-        non-ready paths
-      </text>
-      <text
-        x="418"
-        y="244"
-        textAnchor="middle"
-        fontFamily="Source Serif 4, Georgia, serif"
-        fontSize="11"
-        fill="#4a6363"
-      >
-        clarify · explain
-      </text>
-      <path
-        d="M338 415 C450 415 450 375 338 391"
-        fill="none"
-        stroke="#0d7377"
-        strokeWidth="2"
-        strokeDasharray="7 5"
-        markerEnd="url(#request-arrow)"
-      />
-      <text
-        x="404"
-        y="437"
-        textAnchor="middle"
-        fontFamily="JetBrains Mono, monospace"
-        fontSize="11"
-        fill="#4a6363"
-      >
-        tool-result loop
-      </text>
-    </svg>
-  );
-}
-
-function ArchitectureScrolly() {
-  const [activeStep, setActiveStep] = useState(0);
-  const stepRefs = useRef([]);
-  const stepRatios = useRef(new Map());
+function AnswerWalkthrough() {
+  const prefersReducedMotion = useReducedMotion();
+  const [activeStage, setActiveStage] = useState(0);
+  const stageRefs = useRef([]);
+  const stageRatios = useRef(new Map());
 
   useEffect(() => {
-    const ratios = stepRatios.current;
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+
+    const ratios = stageRatios.current;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const index = Number(entry.target.dataset.step);
+          const index = Number(entry.target.dataset.stage);
           ratios.set(index, entry.isIntersecting ? entry.intersectionRatio : 0);
         });
 
@@ -1520,184 +1460,469 @@ function ArchitectureScrolly() {
           .filter(([, ratio]) => ratio > 0)
           .sort(([, firstRatio], [, secondRatio]) => secondRatio - firstRatio)[0];
 
-        if (mostVisible) {
-          setActiveStep(mostVisible[0]);
-        }
+        if (mostVisible) setActiveStage(mostVisible[0]);
       },
       { rootMargin: '-74px 0px -45% 0px', threshold: [0, 0.15, 0.4, 0.7] },
     );
 
-    stepRefs.current.forEach((node) => node && observer.observe(node));
+    stageRefs.current.forEach((node) => node && observer.observe(node));
     return () => {
       observer.disconnect();
       ratios.clear();
     };
   }, []);
 
+  const selectStage = (index) => {
+    setActiveStage(index);
+    stageRefs.current[index]?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'center',
+    });
+  };
+
   return (
     <FadeIn>
-      <h2>Under the hood</h2>
+      <h2>See one answer being built</h2>
       <p>
-        Here&apos;s what happens inside a single request. UK Chat&apos;s core runtime is a FastAPI
-        server-sent-events handler that calls the Anthropic SDK directly. There is no generic agent framework
-        in the request path. The chat owns both the opening gateway and the tool loop, so the rules that
-        matter can be enforced at the point where each decision is made. Each stage below is tagged with the
-        segment that owns it.
+        UK Chat owns both the opening gateway and the tool loop in a FastAPI server-sent-events handler that
+        calls the Anthropic SDK directly. There is no generic agent framework in the request path. Follow one
+        request through that boundary, from the language model&apos;s proposed plan to a tool-backed answer.
       </p>
-      <div className="scrollytelling-container">
-        <div className="scrolly-narrative">
+      <p className="walkthrough-disclosure">
+        This guided reconstruction uses the real stages, tools, assumptions, and result from the Child Benefit
+        example; it is not a live chat session. Scroll to move through the six stages, or click the stage
+        selector and arrow buttons to move directly between them.
+      </p>
+      <div className="answer-walkthrough-scrolly">
+        <div className="answer-walkthrough-sticky">
+          <CompressedUkChatPreview activeStage={activeStage} onStageChange={selectStage} />
+        </div>
+        <div className="answer-walkthrough-scroll-track" aria-hidden="true">
           {requestSteps.map((step, index) => (
-            <section
-              className={`narrative-step ${activeStep === index ? 'active' : ''}`}
-              aria-labelledby={`stage-${step.number}`}
-              data-step={index}
+            <div
+              className="answer-walkthrough-scroll-step"
+              data-stage={index}
               key={step.number}
-              aria-current={activeStep === index ? 'step' : undefined}
               ref={(node) => {
-                stepRefs.current[index] = node;
+                stageRefs.current[index] = node;
               }}
-            >
-              <div className="step-header">
-                <span className="step-number">{step.number}</span>
-                <span className="step-heading">
-                  <h3 className="step-title" id={`stage-${step.number}`}>
-                    {step.title}
-                  </h3>
-                  <span className="step-subtitle">{step.subtitle}</span>
-                </span>
-                <span className="step-segment">{step.segment}</span>
-              </div>
-              <div className="step-content">
-                {step.body}
-                <ExampleExchange className="stage-example" {...step.example} />
-              </div>
-            </section>
+            />
           ))}
         </div>
-        <aside className="scrolly-sticky">
-          <div className="example-panel diagram-only">
-            <div className="example-header">
-              <span className="example-title">One request</span>
-              <span className="example-badge">
-                Step {activeStep + 1} of {requestSteps.length}
-              </span>
-            </div>
-            <div className="example-body">
-              <div className="diagram-container">
-                <RequestFlowDiagram activeStep={activeStep} />
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
     </FadeIn>
   );
 }
 
-const traceItems = traceSteps.map((step) => ({ key: step.id, step }));
-
-function CallTrace() {
-  const [activeIndex, setActiveIndex] = useState(0);
+function CalculationWorkingDisclosure() {
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <CardTabs
-      idPrefix="call-trace"
-      label="Tool-call trace"
-      meta={`${traceSteps.length} calls · one turn`}
-      items={traceItems}
-      activeIndex={activeIndex}
-      onSelect={(item, index) => setActiveIndex(index)}
-      cardsClassName="tool-cards trace-cards"
-      renderCard={(item, index) => (
-        <>
-          <span className="iteration-num">{index + 1}</span>
-          <span className="iteration-title">{item.step.stage}</span>
-          <span className="iteration-subtitle">{item.step.family}</span>
-        </>
+    <div className="compressed-chat-working-disclosure">
+      <button
+        className="compressed-chat-working-toggle"
+        type="button"
+        aria-expanded={isExpanded}
+        onClick={() => setIsExpanded((current) => !current)}
+      >
+        <IconChevronDown className={isExpanded ? '' : 'is-collapsed'} aria-hidden="true" />
+        <span>Working through the problem</span>
+      </button>
+
+      {isExpanded && (
+        <div className="compressed-chat-working-body">
+          <p className="compressed-chat-working-narration">
+            I&apos;ll confirm the approved reform against the public catalogue, run it, and calculate its
+            annual budgetary impact.
+          </p>
+          {calculationToolSteps.map((tool) => (
+            <details className="compressed-chat-working-tool" key={tool.id}>
+              <summary>
+                <IconChevronDown aria-hidden="true" />
+                <code>{tool.toolName}</code>
+                <span aria-label="Complete">✓</span>
+              </summary>
+              <div className="compressed-chat-working-tool-body">{tool.body}</div>
+            </details>
+          ))}
+        </div>
       )}
-    >
-      <div className="call-trace">{traceSteps[activeIndex].body}</div>
-    </CardTabs>
+    </div>
   );
 }
 
-function WorkedExample() {
+function CompressedUkChatPreview({ activeStage, onStageChange }) {
   return (
-    <FadeIn>
-      <h2>The same reform, call by call</h2>
-      <p>
-        Consider: “For 2026, set the Child Benefit eldest-child rate to £30 a week and show the annual
-        budgetary impact.” The request contains a policy, a final value, a year, and an output. It does not
-        contain a PolicyEngine parameter path, a reform object, or the sequence of tools needed to answer it.
-      </p>
-      <p>
-        The six stages above decide what the system does; underneath, the turn is a short sequence of typed
-        calls, each one taking an argument that an earlier call produced. This is that sequence for the
-        request.
-      </p>
-      <CallTrace />
-      <p>
-        Two features of the sequence carry most of the design. The first is that{' '}
-        <code>run_society_simulation</code> hands back a handle rather than data: the language model receives
-        a <code>result_id</code>, a dataset reference, and a year, and never receives household rows, survey
-        weights, or any serialisable simulation object. Weighting happens inside the PolicyEngine UK model,
-        and the seven analysis tools are the only route from a stored simulation to a number.
-      </p>
-      <p>
-        The second is provenance. Every parameter path, value, and handle in the sequence was either supplied
-        by the user or produced by a preceding call, so each argument can be traced to its source. Nothing in
-        it was recalled.
-      </p>
-      <section className="worked-result" aria-labelledby="worked-result-title">
-        <div className="worked-result-heading">
-          <div>
-            <div className="worked-result-eyebrow">Computed result</div>
-            <h3 id="worked-result-title">About £0.9 billion a year in additional government cost</h3>
+    <div className="compressed-chat-walkthrough">
+      <section
+        className="compressed-chat-preview"
+        aria-label="Compressed reproduction of PolicyEngine UK Chat"
+      >
+        <div className="compressed-chat-main">
+          <div className="compressed-chat-empty-state">
+            <div className="compressed-chat-composer-wrap">
+              <div className="compressed-chat-composer">
+                <div className="compressed-chat-user-request" aria-label="User request">
+                  {walkthroughUserRequest}
+                </div>
+              </div>
+            </div>
+
+            <div className="compressed-chat-transcript">
+              {activeStage !== 5 && (
+                <div className="compressed-chat-loading" role="status" aria-label="UK Chat is working">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              )}
+
+              {[1, 2, 3].includes(activeStage) && (
+                <div className="compressed-chat-working">Working through the problem</div>
+              )}
+
+              {[4, 5].includes(activeStage) && <CalculationWorkingDisclosure key={activeStage} />}
+
+              {activeStage === 5 && (
+                <div className="compressed-chat-assistant-answer" aria-label="UK Chat answer">
+                  <p>{walkthroughAnswerSummary}</p>
+                  <p>{walkthroughAnswerMethod}</p>
+                </div>
+              )}
+            </div>
           </div>
-          <span className="worked-result-year">2026</span>
+
+          {activeStage === 0 && (
+            <div className="compressed-chat-ground-stage">
+              <section className="compressed-chat-ground-description" aria-labelledby="ground-stage-title">
+                <div className="compressed-chat-ground-meta">
+                  <span>Step 1 · AI model</span>
+                  <span>Ground</span>
+                </div>
+                <h4 id="ground-stage-title">A structured opening plan</h4>
+                <div className="compressed-chat-ground-description-body">{requestSteps[0].body}</div>
+              </section>
+
+              <section
+                className="compressed-chat-ground-technical"
+                aria-label="Ground stage technical exchange"
+              >
+                <div className="example-section">
+                  <div className="example-section-title">
+                    The user&apos;s message, as the gateway receives it
+                  </div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{`last_user_message="${walkthroughUserRequest}"`}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Proposed plan</div>
+                  <pre className="compressed-chat-ground-code compressed-chat-ground-code-plan">
+                    <code>{JSON.stringify(groundProposedPlan, null, 2)}</code>
+                  </pre>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeStage === 1 && (
+            <div className="compressed-chat-ground-stage">
+              <section className="compressed-chat-ground-description" aria-labelledby="resolve-stage-title">
+                <div className="compressed-chat-ground-meta">
+                  <span>Step 2 · Gateway</span>
+                  <span>Resolve</span>
+                </div>
+                <h4 id="resolve-stage-title">Current catalogue evidence</h4>
+                <div className="compressed-chat-ground-description-body">{requestSteps[1].body}</div>
+              </section>
+
+              <section
+                className="compressed-chat-ground-technical"
+                aria-label="Resolve stage technical exchange"
+              >
+                <div className="example-section">
+                  <div className="example-section-title">Catalogue query</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{resolveCatalogueCall}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Match</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{JSON.stringify(resolveCatalogueMatch, null, 2)}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Why the match can be used</div>
+                  <div className="compressed-chat-evidence-list">
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <code>gov.hmrc.child_benefit.amount.eldest</code>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">·</span>
+                      <span>Returned from the installed UK package, not from model memory</span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">·</span>
+                      <span>“Eldest-child rate” matches the parameter&apos;s catalogue label</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeStage === 2 && (
+            <div className="compressed-chat-ground-stage">
+              <section
+                className="compressed-chat-ground-description compressed-chat-gate-description"
+                aria-labelledby="gate-stage-title"
+              >
+                <div className="compressed-chat-ground-meta">
+                  <span>Step 3 · Gateway</span>
+                  <span>Gate</span>
+                </div>
+                <h4 id="gate-stage-title">Five deterministic outcomes</h4>
+                <div className="compressed-chat-ground-description-body">
+                  <p>
+                    The gateway applies fixed policy to the grounded, catalogue-backed plan and assigns one of
+                    five outcomes. Only a <strong>ready</strong> request may enter the calculation loop.
+                  </p>
+                  <p>
+                    The gate is deliberately biased towards computing. If the classifier errors or returns
+                    something the server cannot read, the request is treated as ready rather than refused, on
+                    the view that a wrong refusal costs more than a wrong attempt. The guarantees that follow
+                    come from the tools, not from the gate.
+                  </p>
+                  <ul className="gateway-outcomes">
+                    <li>
+                      <strong>Ready:</strong> the request is complete and supported, so calculation can begin.
+                    </li>
+                    <li>
+                      <strong>Needs plan:</strong> a required choice is missing, so the chat asks a clarifying
+                      question.
+                    </li>
+                    <li>
+                      <strong>Partial:</strong> the request mixes supported and unsupported outputs, so the
+                      chat offers the supported part.
+                    </li>
+                    <li>
+                      <strong>Out of scope:</strong> the requested policy output cannot be modelled, so
+                      calculation tools stay closed.
+                    </li>
+                    <li>
+                      <strong>Irrelevant:</strong> the request is unrelated to UK tax and benefit policy and
+                      takes a lightweight response path.
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              <section
+                className="compressed-chat-ground-technical"
+                aria-label="Gate stage technical exchange"
+              >
+                <div className="example-section">
+                  <div className="example-section-title">Gated plan</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{gateCall}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Verdict</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{JSON.stringify(gateVerdict, null, 2)}</code>
+                  </pre>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeStage === 3 && (
+            <div className="compressed-chat-ground-stage">
+              <section className="compressed-chat-ground-description" aria-labelledby="verify-stage-title">
+                <div className="compressed-chat-ground-meta">
+                  <span>Step 4 · Gateway</span>
+                  <span>Verify</span>
+                </div>
+                <h4 id="verify-stage-title">Exact reform construction</h4>
+                <div className="compressed-chat-ground-description-body">
+                  <p>
+                    A society-wide reform receives a second bounded check. The resolver searches the rules
+                    engine&apos;s current reform targets, binds the user&apos;s wording to an exact parameter
+                    path and date, and constructs reform JSON. The validator must accept that construction
+                    before a simulation can run.
+                  </p>
+                  <p>
+                    What the gateway approves is then the only reform that can run. The simulation tool
+                    compares the reform it is handed against the approved construction and refuses anything
+                    that does not match, so a different reform cannot be substituted after the check has
+                    passed.
+                  </p>
+                </div>
+              </section>
+
+              <section
+                className="compressed-chat-ground-technical"
+                aria-label="Verify stage technical exchange"
+              >
+                <div className="example-section">
+                  <div className="example-section-title">Resolver construction</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{verifyReformCall}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Approved for this turn</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{JSON.stringify(approvedReform, null, 2)}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Validation findings</div>
+                  <div className="compressed-chat-evidence-list">
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <span>The path exists in the parameter schema</span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <span>
+                        <code>30.0</code> is valid for a currency-GBP parameter
+                      </span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <span>The 2026 date range falls inside the package&apos;s coverage</span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">×</span>
+                      <span>An unrecognised path would be rejected here</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeStage === 4 && (
+            <div className="compressed-chat-ground-stage">
+              <section className="compressed-chat-ground-description" aria-labelledby="calculate-stage-title">
+                <div className="compressed-chat-ground-meta">
+                  <span>Step 5 · Supporting tools</span>
+                  <span>Calculate</span>
+                </div>
+                <h4 id="calculate-stage-title">A bounded 21-tool runtime</h4>
+                <div className="compressed-chat-ground-description-body">{requestSteps[4].body}</div>
+              </section>
+
+              <section
+                className="compressed-chat-ground-technical"
+                aria-label="Calculate stage public tool sequence"
+              >
+                <div className="example-section">
+                  <div className="example-section-title">Five public calls, one turn</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{`list_reform_targets
+  ↓ parameter path
+get_parameter
+  ↓ current value and unit
+validate_reform
+  ↓ validated reform
+run_society_simulation
+  ↓ result_id
+compute_budgetary_impact`}</code>
+                  </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Provenance rule</div>
+                  <p className="compressed-chat-technical-note">
+                    Every argument comes from the user or a preceding call. Expand “Working through the
+                    problem” above to inspect each call and result.
+                  </p>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeStage === 5 && (
+            <div className="compressed-chat-ground-stage">
+              <section className="compressed-chat-ground-description" aria-labelledby="stream-stage-title">
+                <div className="compressed-chat-ground-meta">
+                  <span>Step 6 · Gateway</span>
+                  <span>Stream</span>
+                </div>
+                <h4 id="stream-stage-title">An inspectable response</h4>
+                <div className="compressed-chat-ground-description-body">{requestSteps[5].body}</div>
+              </section>
+
+              <section
+                className="compressed-chat-ground-technical"
+                aria-label="Stream stage technical event sequence"
+              >
+                <div className="example-section">
+                  <div className="example-section-title">Public server-sent events</div>
+                  <pre className="compressed-chat-ground-code">
+                    <code>{streamEventSequence}</code>
+                  </pre>
+                </div>
+              </section>
+            </div>
+          )}
         </div>
-        <p>
-          A production run compares the reform with 2026 current law using PolicyEngine&apos;s Enhanced Family
-          Resources Survey dataset for 2024–25, release 1.56.13. It is a direct static microsimulation
-          estimate. Tax revenue rises because a higher Child Benefit rate increases the High Income Child
-          Benefit Charge paid by higher-income families.
-        </p>
-        <div className="worked-result-table-wrap">
-          <table className="worked-result-table">
-            <caption>Annual change relative to current law</caption>
-            <thead>
-              <tr>
-                <th scope="col">Measure</th>
-                <th scope="col">Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Tax revenue</th>
-                <td>+£0.2 billion</td>
-              </tr>
-              <tr>
-                <th scope="row">Benefit spending</th>
-                <td>+£1.1 billion</td>
-              </tr>
-              <tr className="worked-result-total">
-                <th scope="row">Net budgetary impact</th>
-                <td>−£0.9 billion</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="worked-result-note">
-          A negative net budgetary impact means a cost to government. Figures are rounded to the nearest £0.1
-          billion.
-        </p>
       </section>
-      <p>
-        If the catalogue returned more than one materially plausible interpretation, or the reform resolver
-        could not determine what year or reform the user was requesting, the calculation would pause before
-        the tool loop and ask the user to confirm the intended construction.
-      </p>
-    </FadeIn>
+
+      <aside className="walkthrough-stage-map compressed-chat-stage-map" aria-label="Walkthrough stages">
+        <div className="walkthrough-stage-map-panel">
+          <div className="walkthrough-stage-map-heading">One request, six stages</div>
+          <ol>
+            {requestSteps.map((step, index) => (
+              <li key={step.number}>
+                <button
+                  aria-current={activeStage === index ? 'step' : undefined}
+                  className={`walkthrough-stage-map-button ${activeStage === index ? 'active' : ''}`}
+                  onClick={() => onStageChange(index)}
+                  type="button"
+                >
+                  <span className="walkthrough-stage-map-number">{step.number}</span>
+                  <span className="walkthrough-stage-map-copy">
+                    <strong>{step.title}</strong>
+                    <small>{step.segment}</small>
+                  </span>
+                </button>
+                {index < requestSteps.length - 1 && (
+                  <span className="walkthrough-stage-map-arrow" aria-hidden="true">
+                    ↓
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+          <div className="compressed-chat-stage-controls">
+            <button
+              aria-label="Previous stage"
+              disabled={activeStage === 0}
+              onClick={() => onStageChange(Math.max(0, activeStage - 1))}
+              type="button"
+            >
+              <IconArrowLeft aria-hidden="true" />
+            </button>
+            <div className="walkthrough-stage-map-progress" aria-live="polite">
+              Stage {activeStage + 1} of {requestSteps.length}
+            </div>
+            <button
+              aria-label="Next stage"
+              disabled={activeStage === requestSteps.length - 1}
+              onClick={() => onStageChange(Math.min(requestSteps.length - 1, activeStage + 1))}
+              type="button"
+            >
+              <IconArrowRight aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }
 
@@ -1757,7 +1982,8 @@ function Limitations() {
       <p>
         Some of what follows is a deliberate boundary that will not change. The rest is the current state of a
         beta: reform coverage is incomplete, answers vary in how fully they state their assumptions, and
-        gateway behaviour will move as we act on what users report.
+        gateway behaviour will move as we act on what users report. Widening the range of reforms the typed
+        tools cover, and the evidence the gateway can resolve before calculation, is where the work goes next.
       </p>
       <p>
         The chat is a <strong>modelling tool, not advice</strong>. It reports what the engine calculates under
@@ -1783,18 +2009,12 @@ function Limitations() {
 function NextStepsAndTryIt() {
   return (
     <FadeIn>
-      <h2>What&apos;s next</h2>
-      <p>
-        We want to widen the range of reforms covered by typed tools, improve the speed and inspectability of
-        more specialised analyses, and keep expanding the evidence the gateway can resolve before calculation.
-        UK Chat also works alongside PolicyEngine&apos;s wider generative AI integrations and plugin ecosystem
-        for researchers building their own analyses.
-      </p>
       <h2>Try it yourself</h2>
       <p>
         UK Chat&apos;s answers can be cited and reproduced because the figures come from the same open engine
-        that powers the rest of PolicyEngine. Try it with a reform, then inspect the stated year, dataset,
-        comparator, and method alongside the answer.
+        that powers the rest of PolicyEngine, and it sits alongside PolicyEngine&apos;s wider generative AI
+        integrations and plugin ecosystem for researchers building their own analyses. Try it with a reform,
+        then inspect the stated year, dataset, comparator, and method alongside the answer.
       </p>
       <p>
         Because this is a beta, the cases where it fails are more useful to us than the cases where it works:
@@ -1849,8 +2069,7 @@ export default function App() {
           <Problem />
           <Boundary />
           <ToolExplorer />
-          <ArchitectureScrolly />
-          <WorkedExample />
+          <AnswerWalkthrough />
           <WhatYouCanAsk />
           <Limitations />
           <NextStepsAndTryIt />
