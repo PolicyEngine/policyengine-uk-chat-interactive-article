@@ -1491,7 +1491,7 @@ function AnswerWalkthrough() {
       </p>
       <p className="walkthrough-disclosure">
         This guided reconstruction uses the real stages, tools, assumptions, and result from the Child Benefit
-        example; it is not a live chat session. Scroll to move through the six stages, or use the stage
+        example; it is not a live chat session. Scroll to move through the six stages, or click the stage
         selector and arrow buttons to move directly between them.
       </p>
       <div className="answer-walkthrough-scrolly">
