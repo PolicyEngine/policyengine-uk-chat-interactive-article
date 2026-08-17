@@ -1078,7 +1078,12 @@
   min-width: 0;
   overflow: auto;
   overscroll-behavior: contain;
+  padding-top: 8px;
   width: 100%;
+}
+
+.compressed-chat-transcript > :first-child {
+  margin-top: 0;
 }
 
 .compressed-chat-composer-tools {
@@ -1263,19 +1268,42 @@
 }
 
 .compressed-chat-working-tool {
-  align-items: center;
   color: var(--chat-preview-text-3);
-  display: flex;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  gap: 5px;
   margin: 9px 0;
   max-width: 100%;
   min-width: 0;
+  overflow: hidden;
+}
+
+.compressed-chat-working-tool summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 6px;
+  list-style: none;
   padding: 2px 0;
 }
 
-.compressed-chat-working-tool code {
+.compressed-chat-working-tool summary::-webkit-details-marker {
+  display: none;
+}
+
+.compressed-chat-working-tool summary svg {
+  height: 11px;
+  opacity: 0.5;
+  stroke-width: 2;
+  transform: rotate(-90deg);
+  transition: transform 150ms ease;
+  width: 11px;
+}
+
+.compressed-chat-working-tool[open] summary svg {
+  transform: none;
+}
+
+.compressed-chat-working-tool summary code {
   background: none;
   border-radius: 0;
   color: var(--chat-preview-text-3);
@@ -1284,8 +1312,56 @@
   padding: 0;
 }
 
-.compressed-chat-working-tool > span {
+.compressed-chat-working-tool summary > span {
   color: var(--chat-preview-muted);
+}
+
+.compressed-chat-working-tool summary:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.compressed-chat-working-tool-body {
+  border-left: 1px solid var(--chat-preview-border);
+  margin: 8px 0 14px 5px;
+  max-width: calc(100% - 5px);
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0 0 0 13px;
+}
+
+.compressed-chat-working-tool-body .example-section + .example-section {
+  margin-top: 12px;
+}
+
+.compressed-chat-working-tool-body .example-section-title {
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+
+.compressed-chat-working-tool-body pre.example-code {
+  color: var(--chat-preview-text-3);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 0;
+  overflow-x: auto;
+  padding: 10px 12px;
+  white-space: pre;
+}
+
+.compressed-chat-working-tool-body .example-code .comment,
+.compressed-chat-working-tool-body .example-code .keyword,
+.compressed-chat-working-tool-body .example-code .string,
+.compressed-chat-working-tool-body .example-code .number,
+.compressed-chat-working-tool-body .example-code .error,
+.compressed-chat-working-tool-body .example-code .success {
+  color: inherit;
+}
+
+.compressed-chat-working-tool-body .example-output-line,
+.compressed-chat-working-tool-body .example-file {
+  font-size: 11px;
 }
 
 .compressed-chat-working-toggle:focus-visible {
@@ -1439,6 +1515,42 @@
 .compressed-chat-ground-technical .example-section-title {
   font-size: 0.78rem;
   margin-bottom: 6px;
+}
+
+.compressed-chat-evidence-list {
+  display: grid;
+  gap: 7px;
+}
+
+.compressed-chat-evidence-list > div {
+  align-items: start;
+  color: var(--chat-preview-text-3);
+  display: grid;
+  font-size: 0.78rem;
+  gap: 7px;
+  grid-template-columns: 14px minmax(0, 1fr);
+  line-height: 1.45;
+}
+
+.compressed-chat-evidence-list code {
+  background: transparent;
+  color: var(--chat-preview-text-3);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+  padding: 0;
+}
+
+.article-wrapper .compressed-chat-technical-note {
+  color: var(--chat-preview-text-3);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .compressed-chat-ground-code {
@@ -1620,134 +1732,6 @@
   font-size: 0.76rem;
   overflow-wrap: anywhere;
   padding: 7px 9px;
-}
-
-/* Five calls, one row, following .question-cards. Like that rule this has to
-   stay above the breakpoints below, or the 2- and 1-column fallbacks lose. */
-.trace-cards {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.trace-cards .iteration-card {
-  min-height: 152px;
-}
-
-.trace-cards .iteration-num {
-  margin: 0 auto 12px;
-}
-
-.trace-cards .iteration-title,
-.trace-cards .iteration-subtitle {
-  display: block;
-}
-
-.trace-cards .iteration-title {
-  margin-bottom: 6px;
-}
-
-.worked-result {
-  background: linear-gradient(145deg, #f7fbfa, #eef7f6);
-  border: 1px solid var(--border-accent);
-  border-radius: 14px;
-  margin: 40px 0 32px;
-  padding: 30px;
-}
-
-.worked-result-heading {
-  align-items: flex-start;
-  display: flex;
-  gap: 24px;
-  justify-content: space-between;
-}
-
-.worked-result-eyebrow {
-  color: var(--accent);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
-.worked-result h3 {
-  margin: 0 0 20px;
-}
-
-.worked-result-year {
-  background: var(--accent);
-  border-radius: 999px;
-  color: #fff;
-  flex: 0 0 auto;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 6px 11px;
-}
-
-.worked-result-table-wrap {
-  overflow-x: auto;
-}
-
-.worked-result-table {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-collapse: collapse;
-  border-radius: 10px;
-  margin: 22px 0 14px;
-  overflow: hidden;
-  width: 100%;
-}
-
-.worked-result-table caption {
-  color: var(--text-mid);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding-bottom: 8px;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.worked-result-table th,
-.worked-result-table td {
-  border-bottom: 1px solid var(--border);
-  font-size: 1rem;
-  padding: 13px 16px;
-  text-align: left;
-}
-
-.worked-result-table thead th {
-  background: var(--accent-light);
-  color: var(--text-dark);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.worked-result-table td,
-.worked-result-table thead th:last-child {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.worked-result-table tr:last-child th,
-.worked-result-table tr:last-child td {
-  border-bottom: 0;
-}
-
-.worked-result-total th,
-.worked-result-total td {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.worked-result-note {
-  color: var(--text-light);
-  font-size: 0.9rem;
-  margin: 0;
 }
 
 /* Both placements centre the button and carry the beta marker, so the offer
@@ -1952,19 +1936,6 @@
     display: block;
   }
 
-  .worked-result {
-    padding: 24px 18px;
-  }
-
-  .worked-result-heading {
-    display: block;
-  }
-
-  .worked-result-year {
-    display: inline-block;
-    margin-bottom: 16px;
-  }
-
   .walkthrough-prompt {
     padding: 21px 18px 23px;
   }
@@ -2018,11 +1989,6 @@
 
   .compressed-chat-stage-map {
     padding-top: 0;
-  }
-
-  .worked-result-table th,
-  .worked-result-table td {
-    padding: 11px 10px;
   }
 }
 
@@ -2094,22 +2060,6 @@
   padding-right: 20px;
 }
 
-/* The tool-call trace reuses the legacy .example-* vocabulary, which was
-   written for the sticky panel of the older article. Two things differ here:
-   the calls are <pre> so the line breaks survive, and .example-section's 2px
-   gap is too tight once the blocks sit inside body-width prose. */
-.call-trace pre.example-code {
-  margin: 0;
-}
-
-.call-trace .example-section + .example-section {
-  margin-top: 18px;
-}
-
-.call-trace .example-file {
-  margin-bottom: 0;
-}
-
 /* The tool cards and the stage narrative borrow the same vocabulary, at a
    smaller size: only one example is on screen at a time, and neither panel may
    grow taller than what sits above it. */
@@ -2142,7 +2092,6 @@
 /* The generated JSON keys and elided values run past the panel on a phone;
    the code block scrolls rather than the page. */
 @media (max-width: 600px) {
-  .call-trace pre.example-code,
   .tool-example pre.example-code,
   .stage-example pre.example-code {
     font-size: 0.72rem;

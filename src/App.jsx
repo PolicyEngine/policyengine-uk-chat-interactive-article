@@ -356,13 +356,13 @@ const questionKinds = [
   },
 ];
 
-/* The five calls the Child Benefit request in "The same reform, call by call" actually
-   makes, one per tool family bar Presentation. Identifiers are shortened and the
-   current-law rate is elided, because both come from whichever PolicyEngine UK
-   package is deployed rather than from anything fixed at publication. */
-const traceSteps = [
+/* The five public calls made during the Calculate stage. Identifiers are shortened
+   and the current-law rate is elided, because both come from whichever PolicyEngine
+   UK package is deployed rather than from anything fixed at publication. */
+const calculationToolSteps = [
   {
     id: 'find-target',
+    toolName: 'list_reform_targets',
     stage: 'Find the target',
     family: 'Discovery',
     body: (
@@ -398,6 +398,7 @@ const traceSteps = [
   },
   {
     id: 'read-current-law',
+    toolName: 'get_parameter',
     stage: 'Read current law',
     family: 'Discovery',
     body: (
@@ -449,6 +450,7 @@ const traceSteps = [
   },
   {
     id: 'validate',
+    toolName: 'validate_reform',
     stage: 'Validate',
     family: 'Validation',
     body: (
@@ -497,6 +499,7 @@ const traceSteps = [
   },
   {
     id: 'simulate',
+    toolName: 'run_society_simulation',
     stage: 'Simulate',
     family: 'Simulation',
     body: (
@@ -556,6 +559,7 @@ const traceSteps = [
   },
   {
     id: 'compute',
+    toolName: 'compute_budgetary_impact',
     stage: 'Compute',
     family: 'Analysis',
     body: (
@@ -660,28 +664,6 @@ const approvedReform = {
   },
   require_approved_reform: true,
 };
-
-const societySimulationCall = `run_society_simulation(
-  year=2026,
-  reform={
-    "gov.hmrc.child_benefit.amount.eldest": 30.0
-  }
-)`;
-
-const budgetaryImpactCall = `compute_budgetary_impact(
-  simulation_id=<result_id from run_society_simulation>
-)`;
-
-const calculationToolEvents = [
-  {
-    id: 'society-simulation',
-    name: 'run_society_simulation',
-  },
-  {
-    id: 'budgetary-impact',
-    name: 'compute_budgetary_impact',
-  },
-];
 
 const walkthroughAnswerSummary =
   'Setting the Child Benefit eldest-child rate to £30 a week in 2026 would cost the government about £0.9 billion a year compared with current law. Benefit spending rises by about £1.1 billion, while tax revenue rises by about £0.2 billion because the higher rate also increases High Income Child Benefit Charge receipts.';
@@ -1010,19 +992,28 @@ function TodayWorkflow() {
     <FadeIn>
       <h2>How policy analysis is done today</h2>
       <p>
-        PolicyEngine already answers questions of this kind, but not in conversation. Someone costing a Child
-        Benefit change either builds the reform by hand in the web app, or writes code against the model: find
-        the parameter path, construct a reform, run baseline and reform over the same microdata, read off the
-        measure. Both routes are precise and fully inspectable, and both call the engine UK Chat calls
-        underneath. Both also ask the same thing of the person using them: knowing which parameter carries the
-        policy, how to express the change, and which output answers the question.
+        PolicyEngine already provides tools to answer tax and benefit questions, but not in conversational
+        format. For example, someone looking to determine the cost of a change to the Child Benefit can use
+        one of two PolicyEngine features to do so. They can build the reform by hand in the web app, setting
+        each parameter through the interface and reading the results off the charts it returns. Or they can
+        write code against the PolicyEngine country model: find the parameter path in the catalogue, construct
+        a reform object, run baseline and reform policies over the same survey microdata, then take the
+        budgetary or distributional measure from the output. Either way, a first pass usually takes several
+        attempts to settle the parameter, the date, and the measure.
       </p>
       <p>
-        For a policy analyst, a journalist, or a household working out what a reform would mean for them, the
-        barrier is the setup rather than the arithmetic — and prompting a general-purpose language model looks
-        like the way around it. The rest of this article is about why that shortcut does not produce a figure
-        anyone can rely on. UK Chat replaces neither route, but for the questions its tools already cover it
-        removes the setup and leaves the calculation where it was.
+        Both routes are precise and fully inspectable, and both call the same engine UK Chat calls underneath.
+        Both also ask the same thing of the person using them: knowing which parameter carries the policy, how
+        to express the change, and which output answers the question. For a policy analyst, a journalist, or a
+        household working out what a reform would mean for them, this setup is a real barrier.
+      </p>
+      <p>
+        To this user, prompting a general-purpose AI model may feel like a way around the barrier. However, as
+        this article covers later, this shortcut does not necessarily produce reliable figures, given the
+        current limitations of standard AI models. UK Chat overcomes this limitation by applying the strengths
+        of conversational models to the same engine that already powers the web app and country models,
+        reducing the setup friction mentioned earlier by providing a series of typed tools that ensure results
+        are still deterministically calculated and grounded in fact.
       </p>
     </FadeIn>
   );
@@ -1265,7 +1256,8 @@ function Boundary() {
     <FadeIn>
       <h2>The boundary</h2>
       <p>
-        The central design decision is where the predictive layer stops and the deterministic layer starts.
+        UK Chat&apos;s central design decision is where the predictive layer stops and the deterministic layer
+        starts.
       </p>
       <p>
         The <strong>predictive</strong> parts are interpreting wording, deciding which kind of analysis is
@@ -1282,16 +1274,15 @@ function Boundary() {
         <BoundaryDiagram />
       </div>
       <p>
-        When a question is ready for computation, the language model receives the calculation tools, but not a
-        list of what exists in the model. It has to ask: names are confirmed by calling discovery tools
-        against the deployed package, so a policy the model half-remembers either resolves to a real parameter
-        path or fails to resolve at all. The gateway works the same way from the other side, describing the
-        tools from their own schemas so its vocabulary cannot drift from what the tools actually accept.
-      </p>
-      <p>
-        The gateway sits on that line. It takes the plan the language model proposes and decides whether it
-        may cross into the deterministic side. That is why the system has three parts rather than two: the
-        language model, the gateway, and the tools a plan reaches once the gateway admits it.
+        This boundary creates a three-part request path: the language model, the gateway, and supporting
+        tools. The language model turns the user&apos;s open-ended prompt into a structured simulation or
+        analysis plan. The gateway checks whether that plan is complete and supported, constraining it or
+        asking the user for clarification when necessary, before calculation begins. Once the plan can
+        proceed, the language model receives the calculation tools, but not a static catalogue of PolicyEngine
+        policies and parameters. It must use discovery tools to resolve the user&apos;s wording against the
+        deployed PolicyEngine package, so a policy name either maps to a current parameter path or remains
+        unresolved. The gateway likewise derives its description of each tool from that tool&apos;s schema,
+        keeping its checks aligned with the inputs those tools actually accept.
       </p>
     </FadeIn>
   );
@@ -1392,22 +1383,6 @@ function ToolExplorer() {
 
   return (
     <FadeIn>
-      <h2>The language model proposes a plan</h2>
-      <p>
-        UK Chat breaks the user pathway into three segments: the language model, the gateway, and supporting
-        tools.
-      </p>
-      <p>
-        First, the language model does the predictive work. It takes the user&apos;s open-ended prompt and
-        develops a simulation or analysis plan. The plan has a required format and must use one or more of the
-        deterministic tools connected to the PolicyEngine UK tax and benefit simulation engine.
-      </p>
-      <p>
-        Next, UK Chat&apos;s gateway verifies and sometimes constrains that plan to ensure PolicyEngine
-        provides the tools required to answer the question. The gateway may also ask the user for
-        clarification before finalising a plan.
-      </p>
-
       <h2>Tools make the calculation deterministic</h2>
       <p>
         At this point, UK Chat has a gateway-verified plan, and every figure in the answer comes from the
@@ -1482,8 +1457,8 @@ function AnswerWalkthrough() {
       </p>
       <p className="walkthrough-disclosure">
         This guided reconstruction uses the real stages, tools, assumptions, and result from the Child Benefit
-        example; it is not a live chat session. Use the arrow buttons in the bottom-right of the stage rail to
-        move through the interactive.
+        example; it is not a live chat session. Use the arrow buttons in the bottom-right of the stage
+        selector panel to move through the interactive.
       </p>
       <CompressedUkChatPreview />
     </FadeIn>
@@ -1508,13 +1483,18 @@ function CalculationWorkingDisclosure() {
       {isExpanded && (
         <div className="compressed-chat-working-body">
           <p className="compressed-chat-working-narration">
-            I&apos;ll run the approved reform and calculate its annual budgetary impact.
+            I&apos;ll confirm the approved reform against the public catalogue, run it, and calculate its
+            annual budgetary impact.
           </p>
-          {calculationToolEvents.map((tool) => (
-            <div className="compressed-chat-working-tool" key={tool.id}>
-              <code>{tool.name}</code>
-              <span aria-label="Complete">✓</span>
-            </div>
+          {calculationToolSteps.map((tool) => (
+            <details className="compressed-chat-working-tool" key={tool.id}>
+              <summary>
+                <IconChevronDown aria-hidden="true" />
+                <code>{tool.toolName}</code>
+                <span aria-label="Complete">✓</span>
+              </summary>
+              <div className="compressed-chat-working-tool-body">{tool.body}</div>
+            </details>
           ))}
         </div>
       )}
@@ -1727,6 +1707,23 @@ function CompressedUkChatPreview() {
                     <code>{JSON.stringify(resolveCatalogueMatch, null, 2)}</code>
                   </pre>
                 </div>
+                <div className="example-section">
+                  <div className="example-section-title">Why the match can be used</div>
+                  <div className="compressed-chat-evidence-list">
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <code>gov.hmrc.child_benefit.amount.eldest</code>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">·</span>
+                      <span>Returned from the installed UK package, not from model memory</span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">·</span>
+                      <span>“Eldest-child rate” matches the parameter&apos;s catalogue label</span>
+                    </div>
+                  </div>
+                </div>
               </section>
             </div>
           )}
@@ -1837,6 +1834,29 @@ function CompressedUkChatPreview() {
                     <code>{JSON.stringify(approvedReform, null, 2)}</code>
                   </pre>
                 </div>
+                <div className="example-section">
+                  <div className="example-section-title">Validation findings</div>
+                  <div className="compressed-chat-evidence-list">
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <span>The path exists in the parameter schema</span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <span>
+                        <code>30.0</code> is valid for a currency-GBP parameter
+                      </span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">✓</span>
+                      <span>The 2026 date range falls inside the package&apos;s coverage</span>
+                    </div>
+                    <div>
+                      <span aria-hidden="true">×</span>
+                      <span>An unrecognised path would be rejected here</span>
+                    </div>
+                  </div>
+                </div>
               </section>
             </div>
           )}
@@ -1857,16 +1877,33 @@ function CompressedUkChatPreview() {
                 aria-label="Calculate stage public tool sequence"
               >
                 <div className="example-section">
-                  <div className="example-section-title">1 · Run the approved reform</div>
+                  <div className="example-section-title">Five public calls, one turn</div>
                   <pre className="compressed-chat-ground-code">
-                    <code>{societySimulationCall}</code>
+                    <code>{`list_reform_targets
+  ↓ parameter path
+get_parameter
+  ↓ current value and unit
+validate_reform
+  ↓ validated reform
+run_society_simulation
+  ↓ result_id
+compute_budgetary_impact`}</code>
                   </pre>
                 </div>
                 <div className="example-section">
-                  <div className="example-section-title">2 · Derive the requested output</div>
+                  <div className="example-section-title">Typed result handoff</div>
                   <pre className="compressed-chat-ground-code">
-                    <code>{budgetaryImpactCall}</code>
+                    <code>{`run_society_simulation returns result_id
+  → passed as simulation_id
+  → compute_budgetary_impact returns computed totals`}</code>
                   </pre>
+                </div>
+                <div className="example-section">
+                  <div className="example-section-title">Provenance rule</div>
+                  <p className="compressed-chat-technical-note">
+                    Every argument comes from the user or a preceding call. Expand “Working through the
+                    problem” above to inspect each call and result.
+                  </p>
                 </div>
               </section>
             </div>
@@ -1949,96 +1986,6 @@ function CompressedUkChatPreview() {
         </div>
       </aside>
     </div>
-  );
-}
-
-const traceItems = traceSteps.map((step) => ({ key: step.id, step }));
-
-function CallTrace() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  return (
-    <CardTabs
-      idPrefix="call-trace"
-      label="Tool-call trace"
-      meta={`${traceSteps.length} calls · one turn`}
-      items={traceItems}
-      activeIndex={activeIndex}
-      onSelect={(item, index) => setActiveIndex(index)}
-      cardsClassName="tool-cards trace-cards"
-      renderCard={(item, index) => (
-        <>
-          <span className="iteration-num">{index + 1}</span>
-          <span className="iteration-title">{item.step.stage}</span>
-          <span className="iteration-subtitle">{item.step.family}</span>
-        </>
-      )}
-    >
-      <div className="call-trace">{traceSteps[activeIndex].body}</div>
-    </CardTabs>
-  );
-}
-
-function WorkedExample() {
-  return (
-    <FadeIn>
-      <h2>The same reform, call by call</h2>
-      <p>
-        The six stages decide what the system does. Underneath, the approved plan is a short sequence of typed
-        calls, each taking an argument an earlier call produced. The loop re-derives what the gateway already
-        approved, and the match between the two is itself the check.
-      </p>
-      <CallTrace />
-      <section className="worked-result" aria-labelledby="worked-result-title">
-        <div className="worked-result-heading">
-          <div>
-            <div className="worked-result-eyebrow">Computed result</div>
-            <h3 id="worked-result-title">About £0.9 billion a year in additional government cost</h3>
-          </div>
-          <span className="worked-result-year">2026</span>
-        </div>
-        <p>
-          A production run compares the reform with 2026 current law using PolicyEngine&apos;s Enhanced Family
-          Resources Survey dataset for 2024–25, release 1.56.13. It is a direct static microsimulation
-          estimate. Tax revenue rises because a higher Child Benefit rate increases the High Income Child
-          Benefit Charge paid by higher-income families.
-        </p>
-        <div className="worked-result-table-wrap">
-          <table className="worked-result-table">
-            <caption>Annual change relative to current law</caption>
-            <thead>
-              <tr>
-                <th scope="col">Measure</th>
-                <th scope="col">Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Tax revenue</th>
-                <td>+£0.2 billion</td>
-              </tr>
-              <tr>
-                <th scope="row">Benefit spending</th>
-                <td>+£1.1 billion</td>
-              </tr>
-              <tr className="worked-result-total">
-                <th scope="row">Net budgetary impact</th>
-                <td>−£0.9 billion</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="worked-result-note">
-          A negative net budgetary impact means a cost to government. Figures are rounded to the nearest £0.1
-          billion.
-        </p>
-      </section>
-      <p>
-        The seven analysis tools are the only route from a stored simulation to that number, and every
-        parameter path, value, and handle in the sequence was either supplied by the user or produced by a
-        preceding call. Nothing in it was recalled.
-      </p>
-    </FadeIn>
   );
 }
 
@@ -2186,7 +2133,6 @@ export default function App() {
           <Boundary />
           <ToolExplorer />
           <AnswerWalkthrough />
-          <WorkedExample />
           <WhatYouCanAsk />
           <Limitations />
           <NextStepsAndTryIt />
