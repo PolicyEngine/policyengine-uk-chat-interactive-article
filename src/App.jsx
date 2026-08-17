@@ -1047,11 +1047,11 @@ function Problem() {
         We have measured this directly. In{' '}
         <a href="https://policyengine.org/us/research/introducing-policybench">PolicyBench</a>, an evaluation
         built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits
-        from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. In
-        the launch results the top language model matched PolicyEngine exactly on <strong>80.3%</strong> of
-        its scored outputs. Computed amounts scored lowest: income tax before credits scored far below
-        eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions,
-        and credits in the correct order.
+        from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. As of
+        August 17, 2026, the top language model matches PolicyEngine exactly on <strong>80.3%</strong> of its
+        scored outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility
+        flags, because getting it right means sequencing income concepts, thresholds, exclusions, and credits
+        in the correct order.
       </p>
     </FadeIn>
   );
@@ -1834,14 +1834,6 @@ validate_reform
 run_society_simulation
   ↓ result_id
 compute_budgetary_impact`}</code>
-                  </pre>
-                </div>
-                <div className="example-section">
-                  <div className="example-section-title">Typed result handoff</div>
-                  <pre className="compressed-chat-ground-code">
-                    <code>{`run_society_simulation returns result_id
-  → passed as simulation_id
-  → compute_budgetary_impact returns computed totals`}</code>
                   </pre>
                 </div>
                 <div className="example-section">
