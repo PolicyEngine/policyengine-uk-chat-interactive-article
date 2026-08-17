@@ -824,7 +824,6 @@
   --chat-preview-border: #e5e5e5;
   --chat-preview-faint: #b4b4b4;
   --chat-preview-muted: #8e8e8e;
-  --chat-preview-surface-hover: #ececec;
   --chat-preview-text: #0d0d0d;
   --chat-preview-text-3: #5d5d5d;
   background: var(--chat-preview-bg);
@@ -880,11 +879,6 @@
 .compressed-chat-stage-map .walkthrough-stage-map-button {
   gap: 8px;
   padding: 7px 8px;
-}
-
-.compressed-chat-stage-map .walkthrough-stage-map-button:disabled {
-  cursor: wait;
-  opacity: 0.62;
 }
 
 .compressed-chat-stage-map .walkthrough-stage-map-number {
@@ -990,133 +984,31 @@
   width: 100%;
 }
 
-.compressed-chat-empty-state h3 {
-  color: var(--chat-preview-text);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  font-size: 25.5px;
-  font-weight: 500;
-  flex: 0 0 auto;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  margin: 0 0 18px;
-  max-height: 40px;
-  overflow: hidden;
-  text-align: center;
-  transition:
-    max-height 480ms ease,
-    margin 480ms ease,
-    opacity 280ms ease,
-    transform 480ms ease;
-}
-
-.compressed-chat-empty-state.has-message h3 {
-  margin-bottom: 0;
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-12px);
-}
-
 .compressed-chat-composer-wrap {
   flex: 0 0 auto;
-  max-width: 100%;
+  margin-left: auto;
+  max-width: 75%;
   min-width: 0;
   position: relative;
-  transition: max-width 560ms cubic-bezier(0.22, 1, 0.36, 1);
   width: 100%;
 }
 
-.compressed-chat-empty-state.has-message .compressed-chat-composer-wrap {
-  margin-left: auto;
-  max-width: 75%;
-}
-
 .compressed-chat-composer {
-  background: var(--chat-preview-bg);
-  border: 1px solid var(--chat-preview-border);
-  border-radius: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  padding: 12px 15px 8px;
-  position: relative;
-  transition:
-    background-color 420ms ease,
-    border-color 280ms ease,
-    border-radius 420ms ease,
-    box-shadow 280ms ease,
-    padding 420ms ease;
-}
-
-.compressed-chat-empty-state.has-message .compressed-chat-composer {
   background: #f4f4f4;
-  border-color: transparent;
+  border: 1px solid transparent;
   border-radius: 22px;
   box-shadow: none;
   padding: 10px 16px;
+  position: relative;
 }
 
 .compressed-chat-user-request {
   color: var(--chat-preview-text);
-  font-size: 14.5px;
-  line-height: 1.5;
-  min-height: 44px;
-  overflow-wrap: anywhere;
-  padding: 3px 0;
-  transition:
-    font-size 420ms ease,
-    min-height 420ms ease,
-    padding 420ms ease;
-}
-
-.compressed-chat-empty-state.has-message .compressed-chat-user-request {
   font-size: 15px;
+  line-height: 1.5;
   min-height: 0;
+  overflow-wrap: anywhere;
   padding: 0;
-}
-
-.compressed-chat-caret {
-  animation: compressed-chat-caret-blink 1s step-end infinite;
-  background: var(--chat-preview-text);
-  display: inline-block;
-  height: 1.05em;
-  margin-left: 2px;
-  opacity: 1;
-  transition: opacity 160ms ease;
-  vertical-align: -2px;
-  width: 1.5px;
-}
-
-.compressed-chat-empty-state.has-message .compressed-chat-caret {
-  opacity: 0;
-}
-
-@keyframes compressed-chat-caret-blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-.compressed-chat-composer-actions {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-  margin-top: 5px;
-  max-height: 32px;
-  overflow: hidden;
-  transition:
-    margin 360ms ease,
-    max-height 420ms ease,
-    opacity 220ms ease;
-}
-
-.compressed-chat-empty-state.has-message .compressed-chat-composer-actions {
-  margin-top: 0;
-  max-height: 0;
-  opacity: 0;
 }
 
 .compressed-chat-transcript {
@@ -1131,74 +1023,6 @@
 
 .compressed-chat-transcript > :first-child {
   margin-top: 0;
-}
-
-.compressed-chat-composer-tools {
-  align-items: center;
-  display: inline-flex;
-  gap: 5px;
-}
-
-.compressed-chat-attach,
-.compressed-chat-send {
-  align-items: center;
-  border-radius: 999px;
-  display: inline-flex;
-  height: 28px;
-  justify-content: center;
-  width: 28px;
-}
-
-.compressed-chat-attach {
-  color: var(--chat-preview-text-3);
-}
-
-.compressed-chat-attach svg {
-  height: 16px;
-  stroke-width: 1.8;
-  width: 16px;
-}
-
-.compressed-chat-send {
-  background: var(--chat-preview-surface-hover);
-  color: var(--chat-preview-muted);
-  position: relative;
-  transition:
-    background-color 140ms ease,
-    color 140ms ease,
-    transform 140ms ease;
-}
-
-.compressed-chat-send.is-active {
-  background: var(--chat-preview-text);
-  color: #fff;
-}
-
-.compressed-chat-send.is-submitting {
-  animation: compressed-chat-submit 450ms ease-out both;
-}
-
-.compressed-chat-send svg {
-  height: 14px;
-  stroke-width: 2;
-  width: 14px;
-}
-
-@keyframes compressed-chat-submit {
-  0% {
-    box-shadow: 0 0 0 0 rgba(13, 13, 13, 0.28);
-    transform: scale(1);
-  }
-
-  38% {
-    box-shadow: 0 0 0 7px rgba(13, 13, 13, 0.08);
-    transform: scale(0.78);
-  }
-
-  100% {
-    box-shadow: 0 0 0 12px rgba(13, 13, 13, 0);
-    transform: scale(1);
-  }
 }
 
 .compressed-chat-loading {
@@ -1631,21 +1455,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .compressed-chat-caret,
   .compressed-chat-ground-stage,
   .compressed-chat-loading,
-  .compressed-chat-loading span,
-  .compressed-chat-send.is-submitting {
+  .compressed-chat-loading span {
     animation: none;
-  }
-
-  .compressed-chat-empty-state h3,
-  .compressed-chat-composer-wrap,
-  .compressed-chat-composer,
-  .compressed-chat-user-request,
-  .compressed-chat-caret,
-  .compressed-chat-composer-actions {
-    transition: none;
   }
 }
 

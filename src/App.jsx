@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import {
-  IconArrowLeft,
-  IconArrowRight,
-  IconArrowUp,
-  IconChevronDown,
-  IconPaperclip,
-} from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowRight, IconChevronDown } from '@tabler/icons-react';
 import SiteHeader from './SiteHeader';
 import anthonyVolkHeadshot from './assets/authors/anthony-volk.webp';
 import vahidAhmadiHeadshot from './assets/authors/vahid-ahmadi.webp';
@@ -1559,149 +1553,24 @@ function CalculationWorkingDisclosure() {
 }
 
 function CompressedUkChatPreview({ activeStage, onStageChange }) {
-  const prefersReducedMotion = useReducedMotion();
-  const [animationStarted, setAnimationStarted] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState('idle');
-  const [typedRequest, setTypedRequest] = useState('');
-  const previewRef = useRef(null);
-  const openingAnimationRunning = animationStarted && animationPhase !== 'complete';
-
-  useEffect(() => {
-    if (animationStarted) return undefined;
-
-    const preview = previewRef.current;
-    if (!preview || typeof IntersectionObserver === 'undefined') {
-      setAnimationStarted(true);
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setAnimationStarted(true);
-        observer.disconnect();
-      },
-      { threshold: 0.3 },
-    );
-
-    observer.observe(preview);
-    return () => observer.disconnect();
-  }, [animationStarted]);
-
-  useEffect(() => {
-    if (!animationStarted) return undefined;
-
-    if (prefersReducedMotion) {
-      const reducedMotionTimer = window.setTimeout(() => {
-        setTypedRequest(walkthroughUserRequest);
-        setAnimationPhase('complete');
-      }, 0);
-      return () => window.clearTimeout(reducedMotionTimer);
-    }
-
-    let startTimer;
-    let submitTimer;
-    let messageTimer;
-    let loadingTimer;
-    let completeTimer;
-    let characterIndex = 0;
-
-    startTimer = window.setTimeout(() => setAnimationPhase('typing'), 0);
-    const typingInterval = window.setInterval(() => {
-      characterIndex += 1;
-      setTypedRequest(walkthroughUserRequest.slice(0, characterIndex));
-
-      if (characterIndex < walkthroughUserRequest.length) return;
-
-      window.clearInterval(typingInterval);
-      submitTimer = window.setTimeout(() => {
-        setAnimationPhase('submitting');
-        messageTimer = window.setTimeout(() => {
-          setAnimationPhase('message');
-          loadingTimer = window.setTimeout(() => {
-            setAnimationPhase('loading');
-            completeTimer = window.setTimeout(() => setAnimationPhase('complete'), 1650);
-          }, 650);
-        }, 700);
-      }, 300);
-    }, 22);
-
-    return () => {
-      window.clearTimeout(startTimer);
-      window.clearInterval(typingInterval);
-      window.clearTimeout(submitTimer);
-      window.clearTimeout(messageTimer);
-      window.clearTimeout(loadingTimer);
-      window.clearTimeout(completeTimer);
-    };
-  }, [animationStarted, prefersReducedMotion]);
-
-  useEffect(() => {
-    if (!openingAnimationRunning) return undefined;
-
-    const page = document.documentElement;
-    const body = document.body;
-    const previousPageOverflow = page.style.overflow;
-    const previousPageOverscroll = page.style.overscrollBehavior;
-    const previousBodyOverflow = body.style.overflow;
-    const previousBodyOverscroll = body.style.overscrollBehavior;
-
-    page.style.overflow = 'hidden';
-    page.style.overscrollBehavior = 'none';
-    body.style.overflow = 'hidden';
-    body.style.overscrollBehavior = 'none';
-
-    return () => {
-      page.style.overflow = previousPageOverflow;
-      page.style.overscrollBehavior = previousPageOverscroll;
-      body.style.overflow = previousBodyOverflow;
-      body.style.overscrollBehavior = previousBodyOverscroll;
-    };
-  }, [openingAnimationRunning]);
-
   return (
-    <div className="compressed-chat-walkthrough" aria-busy={openingAnimationRunning} ref={previewRef}>
+    <div className="compressed-chat-walkthrough">
       <section
         className="compressed-chat-preview"
         aria-label="Compressed reproduction of PolicyEngine UK Chat"
       >
         <div className="compressed-chat-main">
-          <div
-            className={`compressed-chat-empty-state ${['message', 'loading', 'complete'].includes(animationPhase) ? 'has-message' : ''}`}
-          >
-            <h3>What&apos;s on your mind today?</h3>
-
+          <div className="compressed-chat-empty-state">
             <div className="compressed-chat-composer-wrap">
               <div className="compressed-chat-composer">
-                <div
-                  className="compressed-chat-user-request"
-                  aria-label={
-                    ['message', 'loading', 'complete'].includes(animationPhase)
-                      ? 'User request'
-                      : 'Draft user request'
-                  }
-                >
-                  {typedRequest}
-                  <span className="compressed-chat-caret" aria-hidden="true" />
-                </div>
-                <div className="compressed-chat-composer-actions">
-                  <div className="compressed-chat-composer-tools">
-                    <span className="compressed-chat-attach" aria-hidden="true">
-                      <IconPaperclip />
-                    </span>
-                  </div>
-                  <span
-                    className={`compressed-chat-send ${typedRequest ? 'is-active' : ''} ${animationPhase === 'submitting' ? 'is-submitting' : ''}`}
-                    aria-hidden="true"
-                  >
-                    <IconArrowUp />
-                  </span>
+                <div className="compressed-chat-user-request" aria-label="User request">
+                  {walkthroughUserRequest}
                 </div>
               </div>
             </div>
 
             <div className="compressed-chat-transcript">
-              {activeStage !== 5 && ['message', 'loading', 'complete'].includes(animationPhase) && (
+              {activeStage !== 5 && (
                 <div className="compressed-chat-loading" role="status" aria-label="UK Chat is working">
                   <span />
                   <span />
@@ -1709,15 +1578,13 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
                 </div>
               )}
 
-              {[1, 2, 3].includes(activeStage) && animationPhase === 'complete' && (
+              {[1, 2, 3].includes(activeStage) && (
                 <div className="compressed-chat-working">Working through the problem</div>
               )}
 
-              {[4, 5].includes(activeStage) && animationPhase === 'complete' && (
-                <CalculationWorkingDisclosure key={activeStage} />
-              )}
+              {[4, 5].includes(activeStage) && <CalculationWorkingDisclosure key={activeStage} />}
 
-              {activeStage === 5 && animationPhase === 'complete' && (
+              {activeStage === 5 && (
                 <div className="compressed-chat-assistant-answer" aria-label="UK Chat answer">
                   <p>{walkthroughAnswerSummary}</p>
                   <p>{walkthroughAnswerMethod}</p>
@@ -1726,7 +1593,7 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
             </div>
           </div>
 
-          {activeStage === 0 && animationPhase === 'complete' && (
+          {activeStage === 0 && (
             <div className="compressed-chat-ground-stage">
               <section className="compressed-chat-ground-description" aria-labelledby="ground-stage-title">
                 <div className="compressed-chat-ground-meta">
@@ -1759,7 +1626,7 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
             </div>
           )}
 
-          {activeStage === 1 && animationPhase === 'complete' && (
+          {activeStage === 1 && (
             <div className="compressed-chat-ground-stage">
               <section className="compressed-chat-ground-description" aria-labelledby="resolve-stage-title">
                 <div className="compressed-chat-ground-meta">
@@ -1807,7 +1674,7 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
             </div>
           )}
 
-          {activeStage === 2 && animationPhase === 'complete' && (
+          {activeStage === 2 && (
             <div className="compressed-chat-ground-stage">
               <section
                 className="compressed-chat-ground-description compressed-chat-gate-description"
@@ -1873,7 +1740,7 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
             </div>
           )}
 
-          {activeStage === 3 && animationPhase === 'complete' && (
+          {activeStage === 3 && (
             <div className="compressed-chat-ground-stage">
               <section className="compressed-chat-ground-description" aria-labelledby="verify-stage-title">
                 <div className="compressed-chat-ground-meta">
@@ -1940,7 +1807,7 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
             </div>
           )}
 
-          {activeStage === 4 && animationPhase === 'complete' && (
+          {activeStage === 4 && (
             <div className="compressed-chat-ground-stage">
               <section className="compressed-chat-ground-description" aria-labelledby="calculate-stage-title">
                 <div className="compressed-chat-ground-meta">
@@ -1988,7 +1855,7 @@ compute_budgetary_impact`}</code>
             </div>
           )}
 
-          {activeStage === 5 && animationPhase === 'complete' && (
+          {activeStage === 5 && (
             <div className="compressed-chat-ground-stage">
               <section className="compressed-chat-ground-description" aria-labelledby="stream-stage-title">
                 <div className="compressed-chat-ground-meta">
@@ -2024,7 +1891,6 @@ compute_budgetary_impact`}</code>
                 <button
                   aria-current={activeStage === index ? 'step' : undefined}
                   className={`walkthrough-stage-map-button ${activeStage === index ? 'active' : ''}`}
-                  disabled={openingAnimationRunning}
                   onClick={() => onStageChange(index)}
                   type="button"
                 >
@@ -2045,7 +1911,7 @@ compute_budgetary_impact`}</code>
           <div className="compressed-chat-stage-controls">
             <button
               aria-label="Previous stage"
-              disabled={openingAnimationRunning || activeStage === 0}
+              disabled={activeStage === 0}
               onClick={() => onStageChange(Math.max(0, activeStage - 1))}
               type="button"
             >
@@ -2056,7 +1922,7 @@ compute_budgetary_impact`}</code>
             </div>
             <button
               aria-label="Next stage"
-              disabled={openingAnimationRunning || activeStage === requestSteps.length - 1}
+              disabled={activeStage === requestSteps.length - 1}
               onClick={() => onStageChange(Math.min(requestSteps.length - 1, activeStage + 1))}
               type="button"
             >
