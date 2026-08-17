@@ -28,7 +28,7 @@ Prompting does not make a language model apply tax and benefit rules. Telling it
 
 This matters when results inform decisions, as the National Audit Office's review of AI in government illustrates. Anyone comparing two reforms needs figures from a fixed microsimulation, not an AI's recollection of figures it has seen. The same applies to a household working out how a reform affects its income: the figure has to come from clear rules, with assumptions written down, so that it can be checked.
 
-We have measured this directly. In PolicyBench, an evaluation built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. As of August 17, 2026, the top language model matches PolicyEngine exactly on 80.3% of its scored outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions, and credits in the correct order.
+We have measured this directly. In [PolicyBench](https://policybench.org), an evaluation built on the US tax and benefit system, we scored how accurately AI models compute taxes and benefits from household prompts with no tools and no lookups, against deterministic PolicyEngine outputs. As of August 17, 2026, the top language model matches PolicyEngine exactly on 88.7% of its scored outputs. Computed amounts scored lowest: income tax before credits scored far below eligibility flags, because getting it right means sequencing income concepts, thresholds, exclusions, and credits in the correct order.
 
 ## The boundary
 
