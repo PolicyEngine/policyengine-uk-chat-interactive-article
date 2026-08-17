@@ -803,6 +803,11 @@
   min-height: 58svh;
 }
 
+.answer-walkthrough-scroll-step:last-child {
+  min-height: 90vh;
+  min-height: 90svh;
+}
+
 .compressed-chat-walkthrough {
   align-items: stretch;
   display: grid;
@@ -875,6 +880,11 @@
 .compressed-chat-stage-map .walkthrough-stage-map-button {
   gap: 8px;
   padding: 7px 8px;
+}
+
+.compressed-chat-stage-map .walkthrough-stage-map-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .compressed-chat-stage-map .walkthrough-stage-map-number {

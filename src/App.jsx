@@ -1564,6 +1564,7 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
   const [animationPhase, setAnimationPhase] = useState('idle');
   const [typedRequest, setTypedRequest] = useState('');
   const previewRef = useRef(null);
+  const openingAnimationRunning = animationStarted && animationPhase !== 'complete';
 
   useEffect(() => {
     if (animationStarted) return undefined;
@@ -1635,8 +1636,31 @@ function CompressedUkChatPreview({ activeStage, onStageChange }) {
     };
   }, [animationStarted, prefersReducedMotion]);
 
+  useEffect(() => {
+    if (!openingAnimationRunning) return undefined;
+
+    const page = document.documentElement;
+    const body = document.body;
+    const previousPageOverflow = page.style.overflow;
+    const previousPageOverscroll = page.style.overscrollBehavior;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscroll = body.style.overscrollBehavior;
+
+    page.style.overflow = 'hidden';
+    page.style.overscrollBehavior = 'none';
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+
+    return () => {
+      page.style.overflow = previousPageOverflow;
+      page.style.overscrollBehavior = previousPageOverscroll;
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscroll;
+    };
+  }, [openingAnimationRunning]);
+
   return (
-    <div className="compressed-chat-walkthrough" ref={previewRef}>
+    <div className="compressed-chat-walkthrough" aria-busy={openingAnimationRunning} ref={previewRef}>
       <section
         className="compressed-chat-preview"
         aria-label="Compressed reproduction of PolicyEngine UK Chat"
@@ -2000,6 +2024,7 @@ compute_budgetary_impact`}</code>
                 <button
                   aria-current={activeStage === index ? 'step' : undefined}
                   className={`walkthrough-stage-map-button ${activeStage === index ? 'active' : ''}`}
+                  disabled={openingAnimationRunning}
                   onClick={() => onStageChange(index)}
                   type="button"
                 >
@@ -2020,7 +2045,7 @@ compute_budgetary_impact`}</code>
           <div className="compressed-chat-stage-controls">
             <button
               aria-label="Previous stage"
-              disabled={activeStage === 0}
+              disabled={openingAnimationRunning || activeStage === 0}
               onClick={() => onStageChange(Math.max(0, activeStage - 1))}
               type="button"
             >
@@ -2031,7 +2056,7 @@ compute_budgetary_impact`}</code>
             </div>
             <button
               aria-label="Next stage"
-              disabled={activeStage === requestSteps.length - 1}
+              disabled={openingAnimationRunning || activeStage === requestSteps.length - 1}
               onClick={() => onStageChange(Math.min(requestSteps.length - 1, activeStage + 1))}
               type="button"
             >
